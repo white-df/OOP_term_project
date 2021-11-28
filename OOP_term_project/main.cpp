@@ -17,9 +17,10 @@ using namespace std;
 ***  Class Building
  */
 
-/*-- Account Class --*/
+/*------------------------------------- Transaction Class -------------------------------------*/
+
 class Transaction {
-private:
+protected:
     static double ID;
     double Amount;
 public:
@@ -30,7 +31,32 @@ public:
 
 double Transaction::ID {1};
 
-/*-- Account Class --*/
+
+/*------------ Children Classes of Transaction Class ------------*/
+
+/*-------- Deposit Transaction Class --------*/
+class DepositTransaction : public Transaction {
+    
+};
+
+
+/*------- Withdrawal Transaction Class ------*/
+class WithdrawalTransaction : public Transaction {
+    
+};
+
+
+/*-------- Transfer Transaction Class -------*/
+class TransferTransaction : public Transaction {
+    
+};
+
+
+
+
+
+/*--------------------------------------- Account Class ---------------------------------------*/
+
 class Account {
 private:
     string accountNumber;
@@ -53,7 +79,12 @@ public:
     }
 };
 
-/*-- Bank Class --*/
+
+
+
+
+/*----------------------------------------- Bank Class ----------------------------------------*/
+
 class Bank {
 private:
     string bankName;
@@ -78,20 +109,36 @@ public:
     }
 };
 
-Bank kbBank;
-Bank kakaoBank;
-Bank bankList[2] = {kbBank, kakaoBank};
+Bank KbBank("KB");
+Bank KakaoBank("KAKAO");
+Bank DaeguBank("DGB");
+Bank ShinhanBank("SHB");
+Bank WooriBank("WOORI");
+Bank IbkBank("IBK");
+Bank NonghyupBank("NH");
+Bank BusanBank("BNK");
+Bank HanaBank("HANA");
+Bank KwangjuBank("JB");
+Bank JejuBank("JEJU");
+Bank bankList[11] = {KbBank, KakaoBank, DaeguBank, ShinhanBank,
+                    WooriBank, IbkBank, NonghyupBank, BusanBank,
+                    HanaBank, KwangjuBank, JejuBank};
 
 
 Bank findBank(string name) {
     int i;
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < 11; i++) {
         if (bankList[i].getBankName().compare(name) == 0) break;
     }
     return bankList[i];
 }
 
-/*-- Session Class --*/
+
+
+
+
+/*--------------------------------------- Session Class ---------------------------------------*/
+
 class Session {
 protected:
     Account account;
@@ -119,9 +166,16 @@ void Session::Transfer(double amount, Account destination) {
     destination.plusMoney(amount);
 }
 
+
+/*-------------- Children Classes of Session Class --------------*/
+
+/*---------- Korean Session Class -----------*/
+
 class KoreanSession : public Session {
     
 };
+
+/*---------- English Session Class ----------*/
 
 class EnglishSession : public Session {
 public:
@@ -216,34 +270,47 @@ public:
     }
 };
 
-/*-- Bank Class --*/
+
+
+
+
+/*----------------------------------------- ATM Class -----------------------------------------*/
+
 class ATM {
 protected:
-    string serialNum;
-    Bank primaryBank;
+    string serialNum; // ATM 시리얼 넘버
+    Bank primaryBank; // 주거래 은행
     unsigned long long cashAmount;  // ATM에 들어있는 현금
-    Transaction* transactionHistoryOfATM;
-    string AdminNum;
-    Session session;
+    Transaction* transactionHistoryOfATM; // ATM 전체 transaction history (Admin에서 접근 가능)
+    string AdminNum; // Admin 넘버
+    Session session; // 세션
 public:
     ATM(string priName) {
         serialNum = "000001";
-        Bank bank = Bank(priName);
-        primaryBank = bank;
+        primaryBank = findBank(priName);
         cashAmount = 10000000;
     }
     string getPrimaryBankInfo() {return primaryBank.getBankName();}
 };
+
+
+/*---------------- Children Classes of ATM Class ----------------*/
+
+/*---------- Single Bank ATM Class ----------*/
 
 class SingleBankATM : public ATM {
 public:
     
 };
 
+/*---------- Multi Bank ATM Class -----------*/
+
 class MultiBankATM : public ATM {
 public:
     
 };
+
+/*---------- Unilingual ATM Class -----------*/
 
 class UnilingualATM : public ATM {
 private:
@@ -253,6 +320,8 @@ public:
         
     }
 };
+
+/*----------- Bilingual ATM Class -----------*/
 
 class BilingualATM : public ATM {
 public:
@@ -266,7 +335,11 @@ public:
 };
 
 
-/*----- Main Function -----*/
+
+
+
+/*--------------------------------------- Main Function ---------------------------------------*/
+
 int main() {
     
     bool programEndSignal = true;
