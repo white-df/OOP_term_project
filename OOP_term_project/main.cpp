@@ -10,6 +10,7 @@
  */
 
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -79,6 +80,8 @@ public:
     }
 };
 
+Account* accountData;
+
 
 
 
@@ -109,28 +112,14 @@ public:
     }
 };
 
-Bank KbBank("KB");
-Bank KakaoBank("KAKAO");
-Bank DaeguBank("DGB");
-Bank ShinhanBank("SHB");
-Bank WooriBank("WOORI");
-Bank IbkBank("IBK");
-Bank NonghyupBank("NH");
-Bank BusanBank("BNK");
-Bank HanaBank("HANA");
-Bank KwangjuBank("JB");
-Bank JejuBank("JEJU");
-Bank bankList[11] = {KbBank, KakaoBank, DaeguBank, ShinhanBank,
-                    WooriBank, IbkBank, NonghyupBank, BusanBank,
-                    HanaBank, KwangjuBank, JejuBank};
-
+Bank* bankData;
 
 Bank findBank(string name) {
     int i;
     for (i = 0; i < 11; i++) {
-        if (bankList[i].getBankName().compare(name) == 0) break;
+        if (bankData[i].getBankName().compare(name) == 0) break;
     }
-    return bankList[i];
+    return bankData[i];
 }
 
 
@@ -285,6 +274,7 @@ protected:
     string AdminNum; // Admin 넘버
     Session session; // 세션
 public:
+    ATM() {}
     ATM(string priName) {
         serialNum = "000001";
         primaryBank = findBank(priName);
@@ -292,6 +282,8 @@ public:
     }
     string getPrimaryBankInfo() {return primaryBank.getBankName();}
 };
+
+ATM* atmData;
 
 
 /*---------------- Children Classes of ATM Class ----------------*/
@@ -338,9 +330,121 @@ public:
 
 
 
+/*------------------------------------- FILE Read Function ------------------------------------*/
+void readAtmData(ifstream& fin) {
+    if (!fin) {
+        cout << "해당 파일이 존재하지 않습니다." << endl;
+        exit(2);
+    } else { // 좀 더 수정해야됨
+        string str;
+        getline(fin, str);
+        int numAtm = stoi(str);
+        ATM atmList[numAtm];
+        atmData = atmList;
+        for (int i = 0; i < numAtm; i++) {
+            getline(fin, str);
+            ATM newAtm(str);
+            atmData[i] = newAtm;
+        }
+    }
+}
+
+void readBankData(ifstream& fin) {
+    if (!fin) {
+        cout << "해당 파일이 존재하지 않습니다." << endl;
+        exit(2);
+    } else {
+        string str;
+        getline(fin, str);
+        int numBank = stoi(str);
+        Bank bankList[numBank];
+        bankData = bankList;
+        for (int i = 0; i < numBank; i++) {
+            getline(fin, str);
+            Bank newBank(str);
+            bankData[i] = newBank;
+        }
+    }
+}
+
+void readAccountData(ifstream& fin) {
+    if (!fin) {
+        cout << "해당 파일이 존재하지 않습니다." << endl;
+        exit(2);
+    } else { // 좀 더 수정해야됨.
+        string str;
+        getline(fin, str);
+        int numAccount = stoi(str);
+        Account accountList[numAccount];
+        accountData = accountList;
+        for (int i = 0; i < numAccount; i++) {
+            getline(fin, str);
+            Account newAccount(str);
+            accountData[i] = newAccount;
+        }
+    }
+}
+
+
+
+
+
 /*--------------------------------------- Main Function ---------------------------------------*/
 
-int main() {
+int main(int argc, char* argv[]) {
+    /*
+     argc 는 인자 개수
+     argv 는 인자 리스트 (문자열로 저장됨)
+     for 구문을 통해 ATM, Bank, Account 데이터를 읽어들일 거임
+     .txt 파일을 읽어들일 거며 .txt 파일은 ATM, Bank, Account 총 3개
+     argv[0] : 프로그램명
+     argv[1] ~ argv[3] : ATM.txt, Bank.txt, Account.txt
+     -> 따라서 argc는 4
+     각 .txt 파일의 첫째줄은 데이터의 개수
+    */
+    
+    int atmArgCount = 0;
+    int bankArgCount = 0;
+    int accountArgCount = 0;
+    
+    if (argc != 4) { // Argument 수가 맞지 않을때
+        cout << "Argument 부족" << endl;
+        return 1;
+    } else { // 정상 실행
+        for (int i = 1; i < argc; i++) {
+            if (strncmp(argv[i], "ATM.txt", 7) == 0) { // Argument 가 ATM.txt 일 경우
+                if (atmArgCount != 0) { // ATM argument 가 이미 한 번 나왔는데 또 나왔을 경우, Error 발생
+                    cout << "Too many ATM arguments..." << endl;
+                    return 2;
+                } else { // 정상 실행
+                    ifstream fin(argv[i]); // 파일 read
+                    readAtmData(fin);
+                    atmArgCount ++;
+                }
+            } else if (strncmp(argv[i], "Bank.txt", 8) == 0) { // Argument 가 Bank.txt 일 경우
+                if (bankArgCount != 0) { // Bank argument 가 이미 한 번 나왔는데 또 나왔을 경우, Error 발생
+                    cout << "Too many Bank arguments..." << endl;
+                    return 3;
+                } else { // 정상 실행
+                    ifstream fin(argv[i]); // 파일 read
+                    readBankData(fin);
+                    bankArgCount ++;
+                }
+            } else if (strncmp(argv[i], "Account.txt", 11) == 0) { // Argument 가 Account.txt 일 경우
+                if (accountArgCount != 0) { // Account argument 가 이미 한 번 나왔는데 또 나왔을 경우, Error 발생
+                    cout << "Too many Account arguments..." << endl;
+                    return 4;
+                } else { // 정상 실행
+                    ifstream fin(argv[i]); // 파일 read
+                    readAccountData(fin);
+                    accountArgCount ++;
+                }
+            } else { // Exception
+                cout << argv[i] << "의 파일명이 invalid 합니다..." << endl;
+                return 5;
+            }
+        }
+    }
     
     bool programEndSignal = true;
     ATM atm1("KB");
