@@ -12,6 +12,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <string.h>
 
 using namespace std;
 
@@ -19,38 +20,97 @@ using namespace std;
 ***  Class Building
  */
 
-/*------------------------------------- Transaction Class -------------------------------------*/
-
-int transactionCnt;
-
+/*-------------------------------------- Transaction Class --------------------------------------*/
+/*-거래내역 남기는 법: Session에서 거래 시작 시 Transaction* transaction 선언 후 거래 종료 시----*/
+/*-transaction = new {depo, withdraw, transfer 중 1}Transaction(transaction, cardnumber, amount)-*/
+class Account; // 전방선언
+double transactionCnt = 0;
 class Transaction {
 protected:
-    const double ID;
-    double Amount;
+    double ID;
+    double Amount = 0;
+    double CardNumber = 0;
+    string description = "unknown";
+    Transaction* transaction = nullptr;
 public:
-    Transaction();
-    double getID() {return ID;}
-    double getAmount() {return Amount;}
+    double getID() { return ID; }
+    double getAmount() { return Amount; }
+    virtual string getInformation() = 0;
 };
 
 
 /*------------ Children Classes of Transaction Class ------------*/
 
 /*-------- Deposit Transaction Class --------*/
-class DepositTransaction : public Transaction {
-    
-};
 
+class DepositTransaction : public Transaction {
+public:
+    DepositTransaction(Transaction* transact, double CardNumber, double Amount);
+    string getInformation();
+};
+DepositTransaction::DepositTransaction(Transaction* transact, double cardnumber, double amount) {
+    transaction = transact;
+    CardNumber = cardnumber;
+    Amount = amount;
+    description.append(to_string(transaction->getID()));
+    description.append(to_string(CardNumber));
+    description.append(" deposited ");
+    description.append(to_string(transaction->getAmount()));
+    description.append("$");
+    ID = transactionCnt++;
+}
+
+string DepositTransaction::getInformation() {
+    return description;
+} /* ex. 1 1234 5678 deposited 100$ */
+  /* ex. 2 1234 5678 withdrew 50$ */
 
 /*------- Withdrawal Transaction Class ------*/
+
 class WithdrawalTransaction : public Transaction {
-    
+public:
+    WithdrawalTransaction(Transaction* transact, double cardnumber, double amount);
+    string getInformation();
+};
+
+WithdrawalTransaction::WithdrawalTransaction(Transaction* transact, double cardnumber, double amount) {
+        transaction = transact;
+        CardNumber = cardnumber;
+        Amount = amount;
+        description.append(to_string(transaction->getID()));
+        description.append(to_string(CardNumber));
+        description.append(" withdrew ");
+        description.append(to_string(transaction->getAmount()));
+        description.append("$");
+        ID = transactionCnt++;
+    }
+
+string WithdrawalTransaction::getInformation() {
+    return description;
+}
+
+/*-------- Transfer Transaction Class -------*/
+
+class TransferTransaction : public Transaction {
+protected:
+    Account* Destaccount;
+};
+
+class AccountTransferTransaction : public TransferTransaction {
+public:
+    AccountTransferTransaction(Transaction* transact, Account* destaccount, double cardnumber, double amount);
+    string getInformation();
 };
 
 
-/*-------- Transfer Transaction Class -------*/
-class TransferTransaction : public Transaction {
-    
+string AccountTransferTransaction::getInformation() {
+    return description;
+}
+
+class CashTransferTransaction : public TransferTransaction {
+public:
+    CashTransferTransaction(Transaction* transact);
+    string getInformation();
 };
 
 
@@ -85,7 +145,22 @@ public:
         if (accountNumber.compare(account) == 0) return true;
         else return false;
     }
+    string getAccountNumber() {return accountNumber;}
 };
+
+AccountTransferTransaction::AccountTransferTransaction(Transaction* transact, Account* destaccount, double cardnumber, double amount) {
+    transaction = transact;
+    Destaccount = destaccount;
+    CardNumber = cardnumber;
+    Amount = amount;
+    description.append(to_string(transaction->getID()));
+    description.append(to_string(CardNumber));
+    description.append(" transfer to ");
+    description.append(Destaccount->getAccountNumber());
+    description.append(to_string(transaction->getAmount()));
+    description.append("$");
+    ID = transactionCnt++;
+}
 
 
 
@@ -284,20 +359,17 @@ protected:
     Session session; // 세션
     int SingleOrMulti; // 0: Single , 1: Multi
 public:
-    ATM() {}
-    ATM(string priName) {
-        serialNum = atmCnt++;
-        primaryBank = findBank(priName);
-        cashAmount = 10000000;
-    }
+    ATM();
     string getPrimaryBankInfo() {return primaryBank.getBankName();}
     int getSerialNum() {return serialNum;}
     Bank getPrimaryBank() {return primaryBank;}
     unsigned long long getCashAmount() {return cashAmount;}
     int getSingleInfo() {return SingleOrMulti;}
+    virtual void startSession() = 0;
+    virtual ~ATM() = default;
 };
 
-vector<ATM> atmData;
+vector<ATM*> atmData;
 
 
 /*---------------- Children Classes of ATM Class ----------------*/
@@ -306,10 +378,10 @@ vector<ATM> atmData;
 
 class SingleBankATM : public ATM {
 public:
-    SingleBankATM(ATM atm) {
-        serialNum = atm.getSerialNum();
-        primaryBank = atm.getPrimaryBank();
-        cashAmount = atm.getCashAmount();
+    SingleBankATM(string priName) {
+        serialNum = atmCnt++;
+        primaryBank = findBank(priName);
+        cashAmount = 10000000;
         SingleOrMulti = 0;
     }
 };
@@ -318,10 +390,10 @@ public:
 
 class MultiBankATM : public ATM {
 public:
-    MultiBankATM(ATM atm) {
-        serialNum = atm.getSerialNum();
-        primaryBank = atm.getPrimaryBank();
-        cashAmount = atm.getCashAmount();
+    MultiBankATM(string priName) {
+        serialNum = atmCnt++;
+        primaryBank = findBank(priName);
+        cashAmount = 10000000;
         SingleOrMulti = 1;
     }
 };
@@ -330,11 +402,11 @@ public:
 
 class UnilingualATM : public ATM {
 public:
-    UnilingualATM(ATM atm) {
-        serialNum = atm.getSerialNum();
-        primaryBank = atm.getPrimaryBank();
-        cashAmount = atm.getCashAmount();
-        SingleOrMulti = atm.getSingleInfo();
+    UnilingualATM(ATM* atm) {
+        serialNum = atm->getSerialNum();
+        primaryBank = atm->getPrimaryBank();
+        cashAmount = atm->getCashAmount();
+        SingleOrMulti = atm->getSingleInfo();
     }
     void startSession() {
         EnglishSession newSession;
@@ -346,11 +418,11 @@ public:
 
 class BilingualATM : public ATM {
 public:
-    BilingualATM(ATM atm) {
-        serialNum = atm.getSerialNum();
-        primaryBank = atm.getPrimaryBank();
-        cashAmount = atm.getCashAmount();
-        SingleOrMulti = atm.getSingleInfo();
+    BilingualATM(ATM* atm) {
+        serialNum = atm->getSerialNum();
+        primaryBank = atm->getPrimaryBank();
+        cashAmount = atm->getCashAmount();
+        SingleOrMulti = atm->getSingleInfo();
     }
     void startSession() {
         while (true) {
@@ -388,16 +460,16 @@ void readAtmData(ifstream& fin) {
             vector<string> splitted;
             getline(fin, str);
             splitted.push_back(str);
-            ATM newAtm(splitted[0]);
+            ATM* newAtm;
             if (splitted[1].compare("Single")) {
-                newAtm = SingleBankATM(newAtm);
+                newAtm = new SingleBankATM(splitted[0]);
             } else if (splitted[1].compare("Multi")) {
-                newAtm = MultiBankATM(newAtm);
+                newAtm = new MultiBankATM(splitted[0]);
             }
             if (splitted[2].compare("Bi")) {
-                newAtm = BilingualATM(newAtm);
+                newAtm = new BilingualATM(newAtm);
             } else if (splitted[2].compare("Uni")) {
-                newAtm = UnilingualATM(newAtm);
+                newAtm = new UnilingualATM(newAtm);
             }
             atmData.push_back(newAtm);
         }
@@ -502,13 +574,13 @@ int main(int argc, char* argv[]) {
             if (i % 3 == 0) {
                 cout << "\n";
             }
-            cout << i << ". " << atmData[i].getPrimaryBankInfo() << " ATM    ";
+            cout << i << ". " << atmData[i]->getPrimaryBankInfo() << " ATM    ";
         }
         cout << "\n";
         cout << "Please Enter the Number of ATM : ";
         int choiceAtm;
         cin >> choiceAtm;
-        atmData[choiceAtm];
+        atmData[choiceAtm]->startSession();
     }
     
     return 0;
