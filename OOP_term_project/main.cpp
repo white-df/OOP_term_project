@@ -463,7 +463,6 @@ void readAtmData(ifstream& fin) {
             ATM* newAtm;
             if (splitted[1].compare("Single")) {
                 newAtm = new SingleBankATM(splitted[0]);
-                
             } else if (splitted[1].compare("Multi")) {
                 newAtm = new MultiBankATM(splitted[0]);
             }
