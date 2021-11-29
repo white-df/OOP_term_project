@@ -24,7 +24,6 @@ using namespace std;
 /*-거래내역 남기는 법: Session에서 거래 시작 시 Transaction* transaction 선언 후 거래 종료 시----*/
 /*-transaction = new {depo, withdraw, transfer 중 1}Transaction(transaction, cardnumber, amount)-*/
 class Account; // 전방선언
-double transactionCnt = 0;
 class Transaction {
 protected:
     double ID;
@@ -57,7 +56,7 @@ DepositTransaction::DepositTransaction(Transaction* transact, double cardnumber,
     description.append(" deposited ");
     description.append(to_string(transaction->getAmount()));
     description.append("$");
-    ID = transactionCnt++;
+    ID += 1;
 }
 
 string DepositTransaction::getInformation() {
@@ -82,7 +81,7 @@ WithdrawalTransaction::WithdrawalTransaction(Transaction* transact, double cardn
         description.append(" withdrew ");
         description.append(to_string(transaction->getAmount()));
         description.append("$");
-        ID = transactionCnt++;
+        ID += 1;
     }
 
 string WithdrawalTransaction::getInformation() {
@@ -159,7 +158,7 @@ AccountTransferTransaction::AccountTransferTransaction(Transaction* transact, Ac
     description.append(Destaccount->getAccountNumber());
     description.append(to_string(transaction->getAmount()));
     description.append("$");
-    ID = transactionCnt++;
+    ID += 1;
 }
 
 
