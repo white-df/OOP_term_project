@@ -15,8 +15,6 @@
 
 using namespace std;
 
-
-
 /*
 ***  Class Building
  */
@@ -284,6 +282,7 @@ protected:
     vector<Transaction> transactionHistoryOfATM; // ATM 전체 transaction history (Admin에서 접근 가능)
     string AdminNum; // Admin 넘버
     Session session; // 세션
+    int SingleOrMulti; // 0: Single , 1: Multi
 public:
     ATM() {}
     ATM(string priName) {
@@ -292,6 +291,10 @@ public:
         cashAmount = 10000000;
     }
     string getPrimaryBankInfo() {return primaryBank.getBankName();}
+    int getSerialNum() {return serialNum;}
+    Bank getPrimaryBank() {return primaryBank;}
+    unsigned long long getCashAmount() {return cashAmount;}
+    int getSingleInfo() {return SingleOrMulti;}
 };
 
 vector<ATM> atmData;
@@ -303,24 +306,39 @@ vector<ATM> atmData;
 
 class SingleBankATM : public ATM {
 public:
-    
+    SingleBankATM(ATM atm) {
+        serialNum = atm.getSerialNum();
+        primaryBank = atm.getPrimaryBank();
+        cashAmount = atm.getCashAmount();
+        SingleOrMulti = 0;
+    }
 };
 
 /*---------- Multi Bank ATM Class -----------*/
 
 class MultiBankATM : public ATM {
 public:
-    
+    MultiBankATM(ATM atm) {
+        serialNum = atm.getSerialNum();
+        primaryBank = atm.getPrimaryBank();
+        cashAmount = atm.getCashAmount();
+        SingleOrMulti = 1;
+    }
 };
 
 /*---------- Unilingual ATM Class -----------*/
 
 class UnilingualATM : public ATM {
-private:
-    string language;
 public:
-    UnilingualATM() {
-        
+    UnilingualATM(ATM atm) {
+        serialNum = atm.getSerialNum();
+        primaryBank = atm.getPrimaryBank();
+        cashAmount = atm.getCashAmount();
+        SingleOrMulti = atm.getSingleInfo();
+    }
+    void startSession() {
+        EnglishSession newSession;
+        session = newSession;
     }
 };
 
@@ -328,12 +346,30 @@ public:
 
 class BilingualATM : public ATM {
 public:
-    BilingualATM() {
-        
+    BilingualATM(ATM atm) {
+        serialNum = atm.getSerialNum();
+        primaryBank = atm.getPrimaryBank();
+        cashAmount = atm.getCashAmount();
+        SingleOrMulti = atm.getSingleInfo();
     }
     void startSession() {
-        Session newSession;
-        session = newSession;
+        while (true) {
+            cout << "Choose the Language" << endl;
+            cout << "1. English" << endl;
+            cout << "2. Korean" << endl;
+            cout << "Please Enter the Number of Language : ";
+            int languageNum;
+            cin >> languageNum;
+            if (languageNum == 1) {
+                EnglishSession newSession;
+                session = newSession;
+            } else if (languageNum == 2) {
+                KoreanSession newSession;
+                session = newSession;
+            } else {
+                cout << "It's an invalid number." << endl;
+            }
+        }
     }
 };
 
@@ -346,11 +382,23 @@ void readAtmData(ifstream& fin) {
     if (!fin) {
         cout << "해당 파일이 존재하지 않습니다." << endl;
         exit(2);
-    } else { // 좀 더 수정해야됨
+    } else {
         while (!fin.eof()) {
             string str;
+            vector<string> splitted;
             getline(fin, str);
-            ATM newAtm(str);
+            splitted.push_back(str);
+            ATM newAtm(splitted[0]);
+            if (splitted[1].compare("Single")) {
+                newAtm = SingleBankATM(newAtm);
+            } else if (splitted[1].compare("Multi")) {
+                newAtm = MultiBankATM(newAtm);
+            }
+            if (splitted[2].compare("Bi")) {
+                newAtm = BilingualATM(newAtm);
+            } else if (splitted[2].compare("Uni")) {
+                newAtm = UnilingualATM(newAtm);
+            }
             atmData.push_back(newAtm);
         }
     }
