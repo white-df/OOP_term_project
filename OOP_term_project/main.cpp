@@ -11,8 +11,11 @@
 
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 using namespace std;
+
+
 
 /*
 ***  Class Building
@@ -20,17 +23,17 @@ using namespace std;
 
 /*------------------------------------- Transaction Class -------------------------------------*/
 
+int transactionCnt;
+
 class Transaction {
 protected:
-    static double ID;
+    const double ID;
     double Amount;
 public:
     Transaction();
     double getID() {return ID;}
     double getAmount() {return Amount;}
 };
-
-double Transaction::ID {1};
 
 
 /*------------ Children Classes of Transaction Class ------------*/
@@ -64,9 +67,15 @@ private:
     string accountPw;
     string userName;
     double availabeFunds;
-    Transaction *transactionHistoryOfAccount;
+    vector<Transaction> transactionHistoryOfAccount;
 public:
     Account() {}
+    Account(string aNum, string aPW, string uName, string funds) {
+        accountNumber = aNum;
+        accountPw = aPW;
+        userName = uName;
+        availabeFunds = double(stoi(funds));
+    }
     ~Account() {}
     bool check_pw(string inPw) {
         if (accountPw == inPw) return true;
@@ -80,8 +89,6 @@ public:
     }
 };
 
-Account* accountData;
-
 
 
 
@@ -91,8 +98,7 @@ Account* accountData;
 class Bank {
 private:
     string bankName;
-    Account* accounts;
-    int numOfAccounts;
+    vector<Account> accounts;
 public:
     Bank() {
         bankName = "unknown";
@@ -101,18 +107,21 @@ public:
         bankName = name;
     }
     string getBankName() {return bankName;}
-    Account findAccount(string account) {
-        int i;
-        for (i = 0; i < numOfAccounts; i++) {
-            if (accounts[i].compareAccount(account)) {
-                break;
-            }
-        }
-        return accounts[i];
-    }
+    Account findAccount(string account);
+    void addAccount(Account account) {accounts.push_back(account);}
 };
 
-Bank* bankData;
+Account Bank::findAccount(string account) {
+    int i;
+    for (i = 0; i < accounts.size(); i++) {
+        if (accounts[i].compareAccount(account)) {
+            break;
+        }
+    }
+    return accounts[i];
+}
+
+vector<Bank> bankData;
 
 Bank findBank(string name) {
     int i;
@@ -131,7 +140,7 @@ Bank findBank(string name) {
 class Session {
 protected:
     Account account;
-    Transaction* transactionHistoryOfSession;
+    vector<Transaction> transactionHistoryOfSession;
     bool authorizationSignal;
     int authorizationCount;
     int withdrawalCount;
@@ -265,25 +274,27 @@ public:
 
 /*----------------------------------------- ATM Class -----------------------------------------*/
 
+int atmCnt = 0;
+
 class ATM {
 protected:
-    string serialNum; // ATM 시리얼 넘버
+    int serialNum; // ATM 시리얼 넘버
     Bank primaryBank; // 주거래 은행
     unsigned long long cashAmount;  // ATM에 들어있는 현금
-    Transaction* transactionHistoryOfATM; // ATM 전체 transaction history (Admin에서 접근 가능)
+    vector<Transaction> transactionHistoryOfATM; // ATM 전체 transaction history (Admin에서 접근 가능)
     string AdminNum; // Admin 넘버
     Session session; // 세션
 public:
     ATM() {}
     ATM(string priName) {
-        serialNum = "000001";
+        serialNum = atmCnt++;
         primaryBank = findBank(priName);
         cashAmount = 10000000;
     }
     string getPrimaryBankInfo() {return primaryBank.getBankName();}
 };
 
-ATM* atmData;
+vector<ATM> atmData;
 
 
 /*---------------- Children Classes of ATM Class ----------------*/
@@ -336,15 +347,11 @@ void readAtmData(ifstream& fin) {
         cout << "해당 파일이 존재하지 않습니다." << endl;
         exit(2);
     } else { // 좀 더 수정해야됨
-        string str;
-        getline(fin, str);
-        int numAtm = stoi(str);
-        ATM atmList[numAtm];
-        atmData = atmList;
-        for (int i = 0; i < numAtm; i++) {
+        while (!fin.eof()) {
+            string str;
             getline(fin, str);
             ATM newAtm(str);
-            atmData[i] = newAtm;
+            atmData.push_back(newAtm);
         }
     }
 }
@@ -354,15 +361,11 @@ void readBankData(ifstream& fin) {
         cout << "해당 파일이 존재하지 않습니다." << endl;
         exit(2);
     } else {
-        string str;
-        getline(fin, str);
-        int numBank = stoi(str);
-        Bank bankList[numBank];
-        bankData = bankList;
-        for (int i = 0; i < numBank; i++) {
+        while (!fin.eof()) {
+            string str;
             getline(fin, str);
             Bank newBank(str);
-            bankData[i] = newBank;
+            bankData.push_back(newBank);
         }
     }
 }
@@ -371,16 +374,14 @@ void readAccountData(ifstream& fin) {
     if (!fin) {
         cout << "해당 파일이 존재하지 않습니다." << endl;
         exit(2);
-    } else { // 좀 더 수정해야됨.
-        string str;
-        getline(fin, str);
-        int numAccount = stoi(str);
-        Account accountList[numAccount];
-        accountData = accountList;
-        for (int i = 0; i < numAccount; i++) {
+    } else {
+        while (!fin.eof()) {
+            string str;
+            vector<string> splitted;
             getline(fin, str);
-            Account newAccount(str);
-            accountData[i] = newAccount;
+            splitted.push_back(str);
+            Account newAccount(splitted[1], splitted[2], splitted[3], splitted[4]);
+            findBank(splitted[0]).addAccount(newAccount);
         }
     }
 }
@@ -400,7 +401,6 @@ int main(int argc, char* argv[]) {
      argv[0] : 프로그램명
      argv[1] ~ argv[3] : ATM.txt, Bank.txt, Account.txt
      -> 따라서 argc는 4
-     각 .txt 파일의 첫째줄은 데이터의 개수
     */
     
     int atmArgCount = 0;
@@ -447,10 +447,20 @@ int main(int argc, char* argv[]) {
     }
     
     bool programEndSignal = true;
-    ATM atm1("KB");
     
     while (programEndSignal) {
-        
+        cout << "Choose the ATM" << endl;
+        for (int i = 0; i < atmData.size(); i++) {
+            if (i % 3 == 0) {
+                cout << "\n";
+            }
+            cout << i << ". " << atmData[i].getPrimaryBankInfo() << " ATM    ";
+        }
+        cout << "\n";
+        cout << "Please Enter the Number of ATM : ";
+        int choiceAtm;
+        cin >> choiceAtm;
+        atmData[choiceAtm];
     }
     
     return 0;
