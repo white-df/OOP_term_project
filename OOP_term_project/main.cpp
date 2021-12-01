@@ -52,8 +52,8 @@ public:
         if (accountNumber.compare(account) == 0) return true;
         else return false;
     }
-}
-;
+    void addTransaction(Transaction* trans) {transactionHistoryOfAccount.push_back(*trans);}
+};
 
 
 
@@ -67,11 +67,11 @@ public:
 class Transaction {
 protected:
     static double transactionCnt;
-    const double ID = transactionCnt;
+    double ID = transactionCnt;
     double Amount = 0;
     string description = "unknown";
     Transaction* transaction = nullptr;
-    Account* account = nullptr;
+    Account account;
 public:
     double getID() { return ID; }
     double getAmount() { return Amount; }
@@ -86,19 +86,18 @@ double Transaction::transactionCnt{ 1 };
 /*-------- Deposit Transaction Class --------*/
 class DepositTransaction : public Transaction {
 public:
-    DepositTransaction(Transaction* transact, Account* acc, double amount);
+    DepositTransaction(Account acc, double amount);
     string getInformation();
 };
-DepositTransaction::DepositTransaction(Transaction* transact, Account* acc, double amount) {
-    transaction = transact;
+DepositTransaction::DepositTransaction(Account acc, double amount) {
     account = acc;
     Amount = amount;
     description.append(to_string(transaction->getID()));
-    description.append(account->getAccountNumber());
+    description.append(account.getAccountNumber());
     description.append(" deposited ");
-    description.append(to_string(transaction->getAmount()));
+    description.append(to_string(amount));
     description.append("$");
-    transactionCnt += 1;
+    ID = transactionCnt++;
 }
 
 string DepositTransaction::getInformation() {
@@ -109,20 +108,21 @@ string DepositTransaction::getInformation() {
 /*------- Withdrawal Transaction Class ------*/
 class WithdrawalTransaction : public Transaction {
 public:
-    WithdrawalTransaction(Transaction* transact, Account* acc, double amount);
+    WithdrawalTransaction(Account acc, double amount);
     string getInformation();
 };
 
-WithdrawalTransaction::WithdrawalTransaction(Transaction* transact, Account* acc, double amount) {
-    transaction = transact;
+WithdrawalTransaction::WithdrawalTransaction(Account acc, double amount) {
+    account = acc;
     Amount = amount;
     description.append(to_string(transaction->getID()));
-    description.append(account->getAccountNumber());
+    description.append(account.getAccountNumber());
     description.append(" withdrew ");
     description.append(to_string(transaction->getAmount()));
     description.append("$");
-    transactionCnt += 1;
+    ID = transactionCnt++;
 }
+
 
 string WithdrawalTransaction::getInformation() {
     return description;
@@ -131,26 +131,25 @@ string WithdrawalTransaction::getInformation() {
 /*-------- Transfer Transaction Class -------*/
 class TransferTransaction : public Transaction {
 protected:
-    Account* destaccount = nullptr;
+    Account destaccount;
 };
 
 class AccountTransferTransaction : public TransferTransaction {
 public:
-    AccountTransferTransaction(Transaction* transact, Account* destacc, Account* account, double amount);
+    AccountTransferTransaction(Account destacc, Account account, double amount);
     string getInformation();
 };
-AccountTransferTransaction::AccountTransferTransaction(Transaction* transact, Account* destacc, Account* acc, double amount) {
-    transaction = transact;
+AccountTransferTransaction::AccountTransferTransaction(Account destacc, Account acc, double amount) {
     destaccount = destacc;
     account = acc;
     Amount = amount;
     description.append(to_string(transaction->getID()));
-    description.append(account->getAccountNumber());
+    description.append(account.getAccountNumber());
     description.append(" transfer to ");
-    description.append(destaccount->getAccountNumber()).append(" ");
+    description.append(destaccount.getAccountNumber()).append(" ");
     description.append(to_string(transaction->getAmount()));
     description.append("$");
-    transactionCnt += 1;
+    ID = transactionCnt++;
 }
 
 
@@ -160,20 +159,19 @@ string AccountTransferTransaction::getInformation() {
 
 class CashTransferTransaction : public TransferTransaction {
 public:
-    CashTransferTransaction(Transaction* transact, Account* destaccount, Account* account, double amount);
+    CashTransferTransaction(Account destaccount, Account account, double amount);
     string getInformation();
 };
-CashTransferTransaction::CashTransferTransaction(Transaction* transact, Account* destacc, Account* acc, double amount) {
-    transaction = transact;
+CashTransferTransaction::CashTransferTransaction(Account destacc, Account acc, double amount) {
     destaccount = destacc;
     Amount = amount;
     description.append(to_string(transaction->getID()));
-    description.append(account->getAccountNumber());
+    description.append(account.getAccountNumber());
     description.append(" transfer to ");
-    description.append(destaccount->getAccountNumber()).append(" ");
+    description.append(destaccount.getAccountNumber()).append(" ");
     description.append(to_string(transaction->getAmount()));
     description.append("$");
-    transactionCnt += 1;
+    ID = transactionCnt++;
 }
 
 string CashTransferTransaction::getInformation() {
@@ -228,6 +226,8 @@ Bank findBank(string name) {
 
 /*--------------------------------------- Session Class ---------------------------------------*/
 
+class ATM;
+
 class Session {
 protected:
     Account account;
@@ -239,22 +239,79 @@ public:
     Session() {}
     void Deposit(double amount);
     void Withdrawal(double amount);
-    void Transfer(double amount, Account destination);
+    void CashTransfer(double amount, Account destination);
+    void AccountTransfer(double amount, Account destination);
     bool Authorization(string password) {return account.check_pw(password);}
 };
 
 void Session::Deposit(double amount) {
     account.plusMoney(amount);
-    
+    DepositTransaction newTransaction(account, amount);
+    account.addTransaction(&newTransaction);
+    transactionHistoryOfSession.push_back(newTransaction);
+    cout << newTransaction.getInformation() << endl;
 }
 
 void Session::Withdrawal(double amount) {
     account.minusMoney(amount);
+    WithdrawalTransaction newTransaction(account, amount);
+    account.addTransaction(&newTransaction);
+    transactionHistoryOfSession.push_back(newTransaction);
+    cout << newTransaction.getInformation() << endl;
 }
 
-void Session::Transfer(double amount, Account destination) {
+void Session::CashTransfer(double amount, Account destination) {
     destination.plusMoney(amount);
+    CashTransferTransaction newTransaction(destination, account, amount);
+    destination.addTransaction(&newTransaction);
+    transactionHistoryOfSession.push_back(newTransaction);
+    cout << newTransaction.getInformation() << endl;
 }
+
+void Session::AccountTransfer(double amount, Account destination) {
+    account.minusMoney(amount);
+    destination.plusMoney(amount);
+    AccountTransferTransaction newTransaction(destination, account, amount);
+    destination.addTransaction(&newTransaction);
+    account.addTransaction(&newTransaction);
+    transactionHistoryOfSession.push_back(newTransaction);
+    cout << newTransaction.getInformation() << endl;
+}
+
+
+
+
+
+/*----------------------------------------- ATM Class -----------------------------------------*/
+
+class ATM {
+protected:
+    static int atmCnt;
+    int serialNum; // ATM 시리얼 넘버
+    Bank primaryBank; // 주거래 은행
+    unsigned long long cashAmount;  // ATM에 들어있는 현금
+    vector<vector<Transaction>> transactionHistoryOfATM; // ATM 전체 transaction history (Admin에서 접근 가능)
+    string AdminNum; // Admin 넘버
+    Session session; // 세션
+    int SingleOrMulti; // 0: Single , 1: Multi
+public:
+    ATM();
+    string getPrimaryBankInfo() {return primaryBank.getBankName();}
+    int getSerialNum() {return serialNum;}
+    Bank getPrimaryBank() {return primaryBank;}
+    unsigned long long getCashAmount() {return cashAmount;}
+    int getSingleInfo() {return SingleOrMulti;}
+    void addTransaction(vector<Transaction> transac) {transactionHistoryOfATM.push_back(transac);}
+    virtual void startSession() = 0;
+    virtual ~ATM() = default;
+};
+
+int ATM::atmCnt{ 1 };
+
+vector<ATM*> atmData;
+
+
+
 
 
 /*-------------- Children Classes of Session Class --------------*/
@@ -262,14 +319,15 @@ void Session::Transfer(double amount, Account destination) {
 /*---------- Korean Session Class -----------*/
 
 class KoreanSession : public Session {
-    
+public:
+    KoreanSession(ATM* atm) {}
 };
 
 /*---------- English Session Class ----------*/
 
 class EnglishSession : public Session {
 public:
-    EnglishSession() {
+    EnglishSession(ATM* atm) {
         authorizationCount = 0;
         authorizationSignal = true;
         string inputAccount;
@@ -346,7 +404,7 @@ public:
                         cout << "Please enter the destination account : ";
                         string inDest;
                         cin >> inDest;
-                        Transfer(inAmount, findBank(inDestName).findAccount(inDest));
+                        AccountTransfer(inAmount, findBank(inDestName).findAccount(inDest));
                         
                     } else if (transferNum == 2) { // Cash Transfer
                         cout << "You choose the Cash Transfer Transaction." << endl;
@@ -360,7 +418,7 @@ public:
                         cout << "Please enter the destination account : ";
                         string inDest;
                         cin >> inDest;
-                        Transfer(inAmount, findBank(inDestName).findAccount(inDest));
+                        CashTransfer(inAmount, findBank(inDestName).findAccount(inDest));
                         
                     }  else { // Exception
                         cout << "It's an invalid number. Please retry." << endl;
@@ -376,40 +434,13 @@ public:
                     cout << "It's an invalid number. Please retry." << endl;
                 }
             }
+            atm->addTransaction(transactionHistoryOfSession);
         }
     }
 };
 
 
 
-
-
-/*----------------------------------------- ATM Class -----------------------------------------*/
-
-class ATM {
-protected:
-    static int atmCnt;
-    int serialNum; // ATM 시리얼 넘버
-    Bank primaryBank; // 주거래 은행
-    unsigned long long cashAmount;  // ATM에 들어있는 현금
-    vector<Transaction> transactionHistoryOfATM; // ATM 전체 transaction history (Admin에서 접근 가능)
-    string AdminNum; // Admin 넘버
-    Session session; // 세션
-    int SingleOrMulti; // 0: Single , 1: Multi
-public:
-    ATM();
-    string getPrimaryBankInfo() {return primaryBank.getBankName();}
-    int getSerialNum() {return serialNum;}
-    Bank getPrimaryBank() {return primaryBank;}
-    unsigned long long getCashAmount() {return cashAmount;}
-    int getSingleInfo() {return SingleOrMulti;}
-    virtual void startSession() = 0;
-    virtual ~ATM() = default;
-};
-
-int ATM::atmCnt{ 1 };
-
-vector<ATM*> atmData;
 
 
 /*---------------- Children Classes of ATM Class ----------------*/
@@ -451,7 +482,7 @@ public:
         SingleOrMulti = atm->getSingleInfo();
     }
     void startSession() {
-        EnglishSession newSession;
+        EnglishSession newSession(this);
         session = newSession;
     }
 };
@@ -471,15 +502,18 @@ public:
             cout << "Choose the Language" << endl;
             cout << "1. English" << endl;
             cout << "2. Korean" << endl;
+            cout << "3. Go to HOME" << endl;
             cout << "Please Enter the Number of Language : ";
             int languageNum;
             cin >> languageNum;
             if (languageNum == 1) {
-                EnglishSession newSession;
+                EnglishSession newSession(this);
                 session = newSession;
             } else if (languageNum == 2) {
-                KoreanSession newSession;
+                KoreanSession newSession(this);
                 session = newSession;
+            } else if (languageNum == 3) {
+                break;
             } else {
                 cout << "It's an invalid number." << endl;
             }
