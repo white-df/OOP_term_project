@@ -23,7 +23,7 @@ using namespace std;
 
 /*--------------------------------------- Account Class ---------------------------------------*/
 
-class Transaction;
+class Transaction; // 전방선언
 
 class Account {
 protected:
@@ -216,7 +216,7 @@ vector<Bank> bankData;
 
 Bank findBank(string name) {
     int i;
-    for (i = 0; i < 11; i++) {
+    for (i = 0; i < bankData.size(); i++) {
         if (bankData[i].getBankName().compare(name) == 0) break;
     }
     return bankData[i];
@@ -245,6 +245,7 @@ public:
 
 void Session::Deposit(double amount) {
     account.plusMoney(amount);
+    
 }
 
 void Session::Withdrawal(double amount) {
@@ -280,7 +281,10 @@ public:
             cout << "Enter your Account Password" << endl;
             cout << "Password : ";
             cin >> inputPassword;
-            if (Authorization(inputPassword)) break;
+            if (Authorization(inputPassword)) {
+                authorizationSignal = true;
+                break;
+            }
             else {
                 authorizationSignal = false;
                 authorizationCount ++;
@@ -297,10 +301,13 @@ public:
                 cout << "1. Deposit" << endl;
                 cout << "2. Withdrawal" << endl;
                 cout << "3. Transfer" << endl;
+                cout << "4. Session Exit" << endl;
                 cout << "\n";
                 cout << "Enter the transaction number which you want: ";
                 int transactionNum;
                 cin >> transactionNum;
+                
+                
                 if (transactionNum == 1) { // Deposit
                     cout << "You choose the Deposit Transaction." << endl;
                     cout << "Please enter the amount what you want to deposit." << endl;
@@ -308,6 +315,8 @@ public:
                     int inAmount;
                     cin >> inAmount;
                     Deposit(inAmount);
+                    
+                    
                 } else if (transactionNum == 2) { // Withdrawal
                     cout << "You choose the Withdrawal Transaction." << endl;
                     cout << "Please enter the amount what you want to withdrawal." << endl;
@@ -315,6 +324,8 @@ public:
                     int inAmount;
                     cin >> inAmount;
                     Withdrawal(inAmount);
+                    
+                    
                 } else if (transactionNum == 3) { // Transfer
                     cout << "You choose the Transfer Transaction." << endl;
                     cout << "1. Account Transfer (Account to Account)" << endl;
@@ -322,6 +333,7 @@ public:
                     cout << "Please enter the kind of the Transfer : " << endl;
                     int transferNum;
                     cin >> transferNum;
+                    
                     if (transferNum == 1) { // Account Transfer
                         cout << "You choose the Account Transfer Transaction." << endl;
                         cout << "Please enter the amount what you want to transfer." << endl;
@@ -335,6 +347,7 @@ public:
                         string inDest;
                         cin >> inDest;
                         Transfer(inAmount, findBank(inDestName).findAccount(inDest));
+                        
                     } else if (transferNum == 2) { // Cash Transfer
                         cout << "You choose the Cash Transfer Transaction." << endl;
                         cout << "Please enter the amount what you want to transfer." << endl;
@@ -348,10 +361,18 @@ public:
                         string inDest;
                         cin >> inDest;
                         Transfer(inAmount, findBank(inDestName).findAccount(inDest));
-                    } else { // Exception
+                        
+                    }  else { // Exception
                         cout << "It's an invalid number. Please retry." << endl;
                     }
-                } else { // Exception
+                    
+                    
+                } else if (transactionNum == 4) { // Session Exit
+                    sessionExitSignal = false;
+                }
+                
+                
+                else { // Exception
                     cout << "It's an invalid number. Please retry." << endl;
                 }
             }
@@ -365,10 +386,9 @@ public:
 
 /*----------------------------------------- ATM Class -----------------------------------------*/
 
-int atmCnt = 0;
-
 class ATM {
 protected:
+    static int atmCnt;
     int serialNum; // ATM 시리얼 넘버
     Bank primaryBank; // 주거래 은행
     unsigned long long cashAmount;  // ATM에 들어있는 현금
@@ -387,6 +407,8 @@ public:
     virtual ~ATM() = default;
 };
 
+int ATM::atmCnt{ 1 };
+
 vector<ATM*> atmData;
 
 
@@ -402,6 +424,7 @@ public:
         cashAmount = 10000000;
         SingleOrMulti = 0;
     }
+    void startSession() {}
 };
 
 /*---------- Multi Bank ATM Class -----------*/
@@ -414,6 +437,7 @@ public:
         cashAmount = 10000000;
         SingleOrMulti = 1;
     }
+    void startSession() {}
 };
 
 /*---------- Unilingual ATM Class -----------*/
@@ -471,7 +495,7 @@ public:
 void readAtmData(ifstream& fin) {
     if (!fin) {
         cout << "해당 파일이 존재하지 않습니다." << endl;
-        exit(2);
+        exit(6);
     } else {
         while (!fin.eof()) {
             string str;
@@ -483,11 +507,17 @@ void readAtmData(ifstream& fin) {
                 newAtm = new SingleBankATM(splitted[0]);
             } else if (splitted[1].compare("Multi")) {
                 newAtm = new MultiBankATM(splitted[0]);
+            } else {
+                cout << "입력 파일 오류" << endl;
+                exit(7);
             }
             if (splitted[2].compare("Bi")) {
                 newAtm = new BilingualATM(newAtm);
             } else if (splitted[2].compare("Uni")) {
                 newAtm = new UnilingualATM(newAtm);
+            } else {
+                cout << "입력 파일 오류" << endl;
+                exit(8);
             }
             atmData.push_back(newAtm);
         }
@@ -497,7 +527,7 @@ void readAtmData(ifstream& fin) {
 void readBankData(ifstream& fin) {
     if (!fin) {
         cout << "해당 파일이 존재하지 않습니다." << endl;
-        exit(2);
+        exit(9);
     } else {
         while (!fin.eof()) {
             string str;
@@ -511,7 +541,7 @@ void readBankData(ifstream& fin) {
 void readAccountData(ifstream& fin) {
     if (!fin) {
         cout << "해당 파일이 존재하지 않습니다." << endl;
-        exit(2);
+        exit(10);
     } else {
         while (!fin.eof()) {
             string str;
@@ -532,6 +562,7 @@ void readAccountData(ifstream& fin) {
 
 int main(int argc, char* argv[]) {
     /*
+     
      argc 는 인자 개수
      argv 는 인자 리스트 (문자열로 저장됨)
      for 구문을 통해 ATM, Bank, Account 데이터를 읽어들일 거임
@@ -541,48 +572,69 @@ int main(int argc, char* argv[]) {
      -> 따라서 argc는 4
     */
     
-    int atmArgCount = 0;
-    int bankArgCount = 0;
-    int accountArgCount = 0;
     
-    if (argc != 4) { // Argument 수가 맞지 않을때
-        cout << "Argument 부족" << endl;
-        return 1;
-    } else { // 정상 실행
-        for (int i = 1; i < argc; i++) {
-            if (strncmp(argv[i], "ATM.txt", 7) == 0) { // Argument 가 ATM.txt 일 경우
-                if (atmArgCount != 0) { // ATM argument 가 이미 한 번 나왔는데 또 나왔을 경우, Error 발생
-                    cout << "Too many ATM arguments..." << endl;
-                    return 2;
-                } else { // 정상 실행
-                    ifstream fin(argv[i]); // 파일 read
-                    readAtmData(fin);
-                    atmArgCount ++;
-                }
-            } else if (strncmp(argv[i], "Bank.txt", 8) == 0) { // Argument 가 Bank.txt 일 경우
-                if (bankArgCount != 0) { // Bank argument 가 이미 한 번 나왔는데 또 나왔을 경우, Error 발생
-                    cout << "Too many Bank arguments..." << endl;
-                    return 3;
-                } else { // 정상 실행
-                    ifstream fin(argv[i]); // 파일 read
-                    readBankData(fin);
-                    bankArgCount ++;
-                }
-            } else if (strncmp(argv[i], "Account.txt", 11) == 0) { // Argument 가 Account.txt 일 경우
-                if (accountArgCount != 0) { // Account argument 가 이미 한 번 나왔는데 또 나왔을 경우, Error 발생
-                    cout << "Too many Account arguments..." << endl;
-                    return 4;
-                } else { // 정상 실행
-                    ifstream fin(argv[i]); // 파일 read
-                    readAccountData(fin);
-                    accountArgCount ++;
-                }
-            } else { // Exception
-                cout << argv[i] << "의 파일명이 invalid 합니다..." << endl;
-                return 5;
-            }
-        }
-    }
+    /*
+     자신의 환경에 따라 두 가지 조건 중 자신이 해당되는 것을 골라 그렇지 않은 케이스의 코드 주석 처리하여 사용하시오.
+     1. Xcode(Mac OS) 이거나 VScode(Window OS) 에서 코드를 실행할 경우 --->>> Case 1 사용
+     2. Terminal 에서 코드를 직접 컴파일하여 사용할 경우 --->>> Case 2 사용
+     */
+    
+    /*------------------------------------------------------- Case 1 Start -------------------------------------------------------*/
+    // 해당 파일이 동일한 디렉토리에 있어야 됨.
+    ifstream f1("ATM.txt");
+    readAtmData(f1);
+    ifstream f2("Bank.txt");
+    readBankData(f2);
+    ifstream f3("Account.txt");
+    readAccountData(f3);
+    /*-------------------------------------------------------- Case 1 End --------------------------------------------------------*/
+    
+    
+    /*------------------------------------------------------- Case 2 Start -------------------------------------------------------*/
+//    // 해당 파일이 동일한 디렉토리에 있어야 됨.
+//    int atmArgCount = 0;
+//    int bankArgCount = 0;
+//    int accountArgCount = 0;
+//
+//    if (argc != 4) { // Argument 수가 맞지 않을때
+//        cout << "Argument 부족" << endl;
+//        return 1;
+//    } else { // 정상 실행
+//        for (int i = 1; i < argc; i++) {
+//            if (strncmp(argv[i], "ATM.txt", 7) == 0) { // Argument 가 ATM.txt 일 경우
+//                if (atmArgCount != 0) { // ATM argument 가 이미 한 번 나왔는데 또 나왔을 경우, Error 발생
+//                    cout << "Too many ATM arguments..." << endl;
+//                    return 2;
+//                } else { // 정상 실행
+//                    ifstream fin(argv[i]); // 파일 read
+//                    readAtmData(fin);
+//                    atmArgCount ++;
+//                }
+//            } else if (strncmp(argv[i], "Bank.txt", 8) == 0) { // Argument 가 Bank.txt 일 경우
+//                if (bankArgCount != 0) { // Bank argument 가 이미 한 번 나왔는데 또 나왔을 경우, Error 발생
+//                    cout << "Too many Bank arguments..." << endl;
+//                    return 3;
+//                } else { // 정상 실행
+//                    ifstream fin(argv[i]); // 파일 read
+//                    readBankData(fin);
+//                    bankArgCount ++;
+//                }
+//            } else if (strncmp(argv[i], "Account.txt", 11) == 0) { // Argument 가 Account.txt 일 경우
+//                if (accountArgCount != 0) { // Account argument 가 이미 한 번 나왔는데 또 나왔을 경우, Error 발생
+//                    cout << "Too many Account arguments..." << endl;
+//                    return 4;
+//                } else { // 정상 실행
+//                    ifstream fin(argv[i]); // 파일 read
+//                    readAccountData(fin);
+//                    accountArgCount ++;
+//                }
+//            } else { // Exception
+//                cout << argv[i] << "의 파일명이 invalid 합니다..." << endl;
+//                return 5;
+//            }
+//        }
+//    }
+    /*-------------------------------------------------------- Case 2 End --------------------------------------------------------*/
     
     bool programEndSignal = true;
     
@@ -592,13 +644,18 @@ int main(int argc, char* argv[]) {
             if (i % 3 == 0) {
                 cout << "\n";
             }
-            cout << i << ". " << atmData[i]->getPrimaryBankInfo() << " ATM    ";
+            cout << i+1 << ". " << atmData[i]->getPrimaryBankInfo() << " ATM    ";
         }
-        cout << "\n";
+        cout << atmData.size() << ". Program Exit\n" << endl;
         cout << "Please Enter the Number of ATM : ";
         int choiceAtm;
         cin >> choiceAtm;
-        atmData[choiceAtm]->startSession();
+        if (choiceAtm == atmData.size()) {
+            programEndSignal = false;
+        }
+        else {
+            atmData[choiceAtm-1]->startSession();
+        }
     }
     
     return 0;
