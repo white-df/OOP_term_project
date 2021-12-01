@@ -12,52 +12,93 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <string.h>
+#include <string>
 
 using namespace std;
-
 
 /*
 ***  Class Building
  */
 
-/*-------------------------------------- Transaction Class --------------------------------------*/
-/*-거래내역 남기는 법: Session에서 거래 시작 시 Transaction* transaction 선언 후 거래 종료 시----*/
-/*-transaction = new {depo, withdraw, transfer 중 1}Transaction(transaction, cardnumber, amount)-*/
-class Account; // 전방선언
+/*------------------------------------------------ Transaction Class ---------------------------------------------------*/
+/*--------------거래내역 남기는 법: Session에서 거래 시작 시 Transaction* transaction 선언 후 거래 종료 시,--------------*/
+/*---transaction = new {deposit, withdraw, transfer 중 1}Transaction(transaction, (dest account), account, amount)---*/
+
+
+/*--------------------------------------- Account Class ---------------------------------------*/
+
+class Transaction;
+
+class Account {
+protected:
+    string accountNumber = "";
+    string accountPw = "";
+    string userName = "";
+    double availableFunds = 0;
+    vector<Transaction> transactionHistoryOfAccount;
+public:
+    Account() {}
+    Account(string aNum, string aPW, string uName, string funds) {
+        accountNumber = aNum;
+        accountPw = aPW;
+        userName = uName;
+        availableFunds = double(stoi(funds));
+    }
+    ~Account() {}
+    string getAccountNumber() { return accountNumber; }
+    bool check_pw(string inPw) {
+        if (accountPw == inPw) return true;
+        else return false;
+    }
+    void plusMoney(double amount) { availableFunds += amount; }
+    void minusMoney(double amount) { availableFunds -= amount; }
+    bool compareAccount(string account) {
+        if (accountNumber.compare(account) == 0) return true;
+        else return false;
+    }
+}
+;
+
+
+
+
+
+//class Transaction : public Account {
 class Transaction {
 protected:
-    double ID;
+    static double transactionCnt;
+    const double ID = transactionCnt;
     double Amount = 0;
-    double CardNumber = 0;
     string description = "unknown";
     Transaction* transaction = nullptr;
+    Account* account = nullptr;
 public:
     double getID() { return ID; }
     double getAmount() { return Amount; }
     virtual string getInformation() = 0;
 };
 
+double Transaction::transactionCnt{ 1 };
+
 
 /*------------ Children Classes of Transaction Class ------------*/
 
 /*-------- Deposit Transaction Class --------*/
-
 class DepositTransaction : public Transaction {
 public:
-    DepositTransaction(Transaction* transact, double CardNumber, double Amount);
+    DepositTransaction(Transaction* transact, Account* acc, double amount);
     string getInformation();
 };
-DepositTransaction::DepositTransaction(Transaction* transact, double cardnumber, double amount) {
+DepositTransaction::DepositTransaction(Transaction* transact, Account* acc, double amount) {
     transaction = transact;
-    CardNumber = cardnumber;
+    account = acc;
     Amount = amount;
     description.append(to_string(transaction->getID()));
-    description.append(to_string(CardNumber));
+    description.append(account->getAccountNumber());
     description.append(" deposited ");
     description.append(to_string(transaction->getAmount()));
     description.append("$");
-    ID += 1;
+    transactionCnt += 1;
 }
 
 string DepositTransaction::getInformation() {
@@ -66,41 +107,51 @@ string DepositTransaction::getInformation() {
   /* ex. 2 1234 5678 withdrew 50$ */
 
 /*------- Withdrawal Transaction Class ------*/
-
 class WithdrawalTransaction : public Transaction {
 public:
-    WithdrawalTransaction(Transaction* transact, double cardnumber, double amount);
+    WithdrawalTransaction(Transaction* transact, Account* acc, double amount);
     string getInformation();
 };
 
-WithdrawalTransaction::WithdrawalTransaction(Transaction* transact, double cardnumber, double amount) {
-        transaction = transact;
-        CardNumber = cardnumber;
-        Amount = amount;
-        description.append(to_string(transaction->getID()));
-        description.append(to_string(CardNumber));
-        description.append(" withdrew ");
-        description.append(to_string(transaction->getAmount()));
-        description.append("$");
-        ID += 1;
-    }
+WithdrawalTransaction::WithdrawalTransaction(Transaction* transact, Account* acc, double amount) {
+    transaction = transact;
+    Amount = amount;
+    description.append(to_string(transaction->getID()));
+    description.append(account->getAccountNumber());
+    description.append(" withdrew ");
+    description.append(to_string(transaction->getAmount()));
+    description.append("$");
+    transactionCnt += 1;
+}
 
 string WithdrawalTransaction::getInformation() {
     return description;
 }
 
 /*-------- Transfer Transaction Class -------*/
-
 class TransferTransaction : public Transaction {
 protected:
-    Account* Destaccount;
+    Account* destaccount = nullptr;
 };
 
 class AccountTransferTransaction : public TransferTransaction {
 public:
-    AccountTransferTransaction(Transaction* transact, Account* destaccount, double cardnumber, double amount);
+    AccountTransferTransaction(Transaction* transact, Account* destacc, Account* account, double amount);
     string getInformation();
 };
+AccountTransferTransaction::AccountTransferTransaction(Transaction* transact, Account* destacc, Account* acc, double amount) {
+    transaction = transact;
+    destaccount = destacc;
+    account = acc;
+    Amount = amount;
+    description.append(to_string(transaction->getID()));
+    description.append(account->getAccountNumber());
+    description.append(" transfer to ");
+    description.append(destaccount->getAccountNumber()).append(" ");
+    description.append(to_string(transaction->getAmount()));
+    description.append("$");
+    transactionCnt += 1;
+}
 
 
 string AccountTransferTransaction::getInformation() {
@@ -109,57 +160,24 @@ string AccountTransferTransaction::getInformation() {
 
 class CashTransferTransaction : public TransferTransaction {
 public:
-    CashTransferTransaction(Transaction* transact);
+    CashTransferTransaction(Transaction* transact, Account* destaccount, Account* account, double amount);
     string getInformation();
 };
-
-
-
-
-
-/*--------------------------------------- Account Class ---------------------------------------*/
-
-class Account {
-private:
-    string accountNumber;
-    string accountPw;
-    string userName;
-    double availabeFunds;
-    vector<Transaction> transactionHistoryOfAccount;
-public:
-    Account() {}
-    Account(string aNum, string aPW, string uName, string funds) {
-        accountNumber = aNum;
-        accountPw = aPW;
-        userName = uName;
-        availabeFunds = double(stoi(funds));
-    }
-    ~Account() {}
-    bool check_pw(string inPw) {
-        if (accountPw == inPw) return true;
-        else return false;
-    }
-    void plusMoney(double amount) {availabeFunds += amount;}
-    void minusMoney(double amount) {availabeFunds -= amount;}
-    bool compareAccount(string account) {
-        if (accountNumber.compare(account) == 0) return true;
-        else return false;
-    }
-    string getAccountNumber() {return accountNumber;}
-};
-
-AccountTransferTransaction::AccountTransferTransaction(Transaction* transact, Account* destaccount, double cardnumber, double amount) {
+CashTransferTransaction::CashTransferTransaction(Transaction* transact, Account* destacc, Account* acc, double amount) {
     transaction = transact;
-    Destaccount = destaccount;
-    CardNumber = cardnumber;
+    destaccount = destacc;
     Amount = amount;
     description.append(to_string(transaction->getID()));
-    description.append(to_string(CardNumber));
+    description.append(account->getAccountNumber());
     description.append(" transfer to ");
-    description.append(Destaccount->getAccountNumber());
+    description.append(destaccount->getAccountNumber()).append(" ");
     description.append(to_string(transaction->getAmount()));
     description.append("$");
-    ID += 1;
+    transactionCnt += 1;
+}
+
+string CashTransferTransaction::getInformation() {
+    return description;
 }
 
 
