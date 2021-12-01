@@ -20,10 +20,6 @@ using namespace std;
 ***  Class Building
  */
 
-/*------------------------------------------------ Transaction Class ---------------------------------------------------*/
-/*--------------거래내역 남기는 법: Session에서 거래 시작 시 Transaction* transaction 선언 후 거래 종료 시,--------------*/
-/*---transaction = new {deposit, withdraw, transfer 중 1}Transaction(transaction, (dest account), account, amount)---*/
-
 
 /*--------------------------------------- Account Class ---------------------------------------*/
 
@@ -62,6 +58,10 @@ public:
 
 
 
+
+/*------------------------------------------------ Transaction Class ---------------------------------------------------*/
+/*--------------거래내역 남기는 법: Session에서 거래 시작 시 Transaction* transaction 선언 후 거래 종료 시,--------------*/
+/*---transaction = new {deposit, withdraw, transfer 중 1}Transaction(transaction, (dest account), account, amount)---*/
 
 //class Transaction : public Account {
 class Transaction {
