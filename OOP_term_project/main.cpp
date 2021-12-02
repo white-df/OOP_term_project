@@ -55,6 +55,8 @@ public:
         else return false;
     }
     void addTransaction(Transaction* trans) {transactionHistoryOfAccount.push_back(*trans);}
+    unsigned long long getFundInfo() {return availableFunds;}
+    vector<Transaction> getTransactionHistoryOfAccount() {return transactionHistoryOfAccount;}
 };
 
 
@@ -72,14 +74,11 @@ protected:
     unsigned long long ID = transactionCnt;
     unsigned long long Amount = 0;
     string description = "#";
-//    Transaction* transaction = nullptr;
-    Account account;
+    Account* account;
 public:
     unsigned long long getID() { return ID; }
     unsigned long long getAmount() { return Amount; }
     string getInformation() {return description;}
-//    virtual string getInformation() = 0;
-//    virtual ~Transaction() = default;
 };
 
 unsigned long long Transaction::transactionCnt{ 1 };
@@ -90,19 +89,19 @@ unsigned long long Transaction::transactionCnt{ 1 };
 /*-------- Deposit Transaction Class --------*/
 class DepositTransaction : public Transaction {
 public:
-    DepositTransaction(Account acc, unsigned long long amount);
+    DepositTransaction(Account* acc, unsigned long long amount);
 //    string getInformation();
 };
-DepositTransaction::DepositTransaction(Account acc, unsigned long long amount) {
+DepositTransaction::DepositTransaction(Account* acc, unsigned long long amount) {
     account = acc;
     Amount = amount;
     ID = transactionCnt++;
     description.append(to_string(ID));
     description.append(". Account number '");
-    description.append(account.getAccountNumber());
+    description.append(account->getAccountNumber());
     description.append("' deposited ");
     description.append(to_string(amount));
-    description.append(" $");
+    description.append(" won");
 }
 
 //string DepositTransaction::getInformation() {
@@ -113,20 +112,20 @@ DepositTransaction::DepositTransaction(Account acc, unsigned long long amount) {
 /*------- Withdrawal Transaction Class ------*/
 class WithdrawalTransaction : public Transaction {
 public:
-    WithdrawalTransaction(Account acc, unsigned long long amount);
+    WithdrawalTransaction(Account* acc, unsigned long long amount);
 //    string getInformation();
 };
 
-WithdrawalTransaction::WithdrawalTransaction(Account acc, unsigned long long amount) {
+WithdrawalTransaction::WithdrawalTransaction(Account* acc, unsigned long long amount) {
     account = acc;
     Amount = amount;
     ID = transactionCnt++;
     description.append(to_string(ID));
     description.append(". Account number '");
-    description.append(account.getAccountNumber());
+    description.append(account->getAccountNumber());
     description.append("' withdrew ");
     description.append(to_string(amount));
-    description.append(" $");
+    description.append(" won");
 }
 
 
@@ -137,26 +136,26 @@ WithdrawalTransaction::WithdrawalTransaction(Account acc, unsigned long long amo
 /*-------- Transfer Transaction Class -------*/
 class TransferTransaction : public Transaction {
 protected:
-    Account destaccount;
+    Account* destaccount;
 };
 
 class AccountTransferTransaction : public TransferTransaction {
 public:
-    AccountTransferTransaction(Account destacc, Account account, unsigned long long amount);
+    AccountTransferTransaction(Account* destacc, Account* account, unsigned long long amount);
 //    string getInformation();
 };
-AccountTransferTransaction::AccountTransferTransaction(Account destacc, Account acc, unsigned long long amount) {
+AccountTransferTransaction::AccountTransferTransaction(Account* destacc, Account* acc, unsigned long long amount) {
     destaccount = destacc;
     account = acc;
     Amount = amount;
     ID = transactionCnt++;
     description.append(to_string(ID));
     description.append(". Account number '");
-    description.append(account.getAccountNumber());
+    description.append(account->getAccountNumber());
     description.append("' transfer to ");
-    description.append(destaccount.getAccountNumber()).append(" ");
+    description.append(destaccount->getAccountNumber()).append(" ");
     description.append(to_string(amount));
-    description.append(" $");
+    description.append(" won");
 }
 
 
@@ -166,20 +165,20 @@ AccountTransferTransaction::AccountTransferTransaction(Account destacc, Account 
 
 class CashTransferTransaction : public TransferTransaction {
 public:
-    CashTransferTransaction(Account destaccount, Account account, unsigned long long amount);
+    CashTransferTransaction(Account* destaccount, Account* account, unsigned long long amount);
 //    string getInformation();
 };
-CashTransferTransaction::CashTransferTransaction(Account destacc, Account acc, unsigned long long amount) {
+CashTransferTransaction::CashTransferTransaction(Account* destacc, Account* acc, unsigned long long amount) {
     destaccount = destacc;
     Amount = amount;
     ID = transactionCnt++;
     description.append(to_string(ID));
     description.append(". Account number '");
-    description.append(account.getAccountNumber());
+    description.append(account->getAccountNumber());
     description.append("' transfer to ");
-    description.append(destaccount.getAccountNumber()).append(" ");
+    description.append(destaccount->getAccountNumber()).append(" ");
     description.append(to_string(amount));
-    description.append(" $");
+    description.append(" won");
 }
 
 //string CashTransferTransaction::getInformation() {
@@ -204,18 +203,19 @@ public:
         bankName = name;
     }
     string getBankName() {return bankName;}
-    Account findAccount(string account);
+    Account* findAccountOfBank(string account);
     void addAccount(Account account) {accounts.push_back(account);}
 };
 
-Account Bank::findAccount(string account) {
+Account* Bank::findAccountOfBank(string account) {
     int i;
     for (i = 0; i < accounts.size(); i++) {
         if (accounts[i].compareAccount(account)) {
+            return &accounts[i];
             break;
         }
     }
-    return accounts[i];
+    return nullptr;
 }
 
 vector<Bank> bankData;
@@ -223,12 +223,23 @@ vector<Bank> bankData;
 Bank* findBank(string name) {
     int i;
     for (i = 0; i < bankData.size(); i++) {
-        if (bankData[i].getBankName().compare(name) == 0) break;
+        if (bankData[i].getBankName().compare(name) == 0) {
+            return &bankData[i];
+            break;
+        }
     }
-    return &bankData[i];
+    return nullptr;
 }
 
-
+Bank* findAccount(string account) {
+    for (int i = 0; i < bankData.size(); i++) {
+        if (bankData[i].findAccountOfBank(account) != nullptr) {
+            return &bankData[i];
+            break;
+        }
+    }
+    return nullptr;
+}
 
 
 
@@ -238,53 +249,21 @@ class ATM;
 
 class Session {
 protected:
-    Account account;
+    ATM* atm;
+    Account* account;
     vector<Transaction> transactionHistoryOfSession;
     bool authorizationSignal;
     int authorizationCount;
     int withdrawalCount;
+    bool primarySignal; // 현재 account의 은행 정보와 ATM의 주거래 은행이 동일하면 true
 public:
     Session() {}
     void Deposit(unsigned long long amount);
     void Withdrawal(unsigned long long amount);
-    void CashTransfer(unsigned long long amount, Account destination);
-    void AccountTransfer(unsigned long long amount, Account destination);
-    bool Authorization(string password) {return account.check_pw(password);}
+    void CashTransfer(unsigned long long amount, Account* destination);
+    void AccountTransfer(unsigned long long amount, Account* destination);
+    bool Authorization(string password) {return account->check_pw(password);}
 };
-
-void Session::Deposit(unsigned long long amount) {
-    account.plusMoney(amount);
-    DepositTransaction newTransaction(account, amount);
-    account.addTransaction(&newTransaction);
-    transactionHistoryOfSession.push_back(newTransaction);
-    cout << newTransaction.getInformation() << endl;
-}
-
-void Session::Withdrawal(unsigned long long amount) {
-    account.minusMoney(amount);
-    WithdrawalTransaction newTransaction(account, amount);
-    account.addTransaction(&newTransaction);
-    transactionHistoryOfSession.push_back(newTransaction);
-    cout << newTransaction.getInformation() << endl;
-}
-
-void Session::CashTransfer(unsigned long long amount, Account destination) {
-    destination.plusMoney(amount);
-    CashTransferTransaction newTransaction(destination, account, amount);
-    destination.addTransaction(&newTransaction);
-    transactionHistoryOfSession.push_back(newTransaction);
-    cout << newTransaction.getInformation() << endl;
-}
-
-void Session::AccountTransfer(unsigned long long amount, Account destination) {
-    account.minusMoney(amount);
-    destination.plusMoney(amount);
-    AccountTransferTransaction newTransaction(destination, account, amount);
-    destination.addTransaction(&newTransaction);
-    account.addTransaction(&newTransaction);
-    transactionHistoryOfSession.push_back(newTransaction);
-    cout << newTransaction.getInformation() << endl;
-}
 
 
 
@@ -310,6 +289,8 @@ public:
     unsigned long long getCashAmount() {return cashAmount;}
     int getSingleInfo() {return SingleOrMulti;}
     void addTransaction(vector<Transaction> transac) {transactionHistoryOfATM.push_back(transac);}
+    void plusMoney(unsigned long long amount) {cashAmount += amount;}
+    void minusMoney(unsigned long long amount) {cashAmount -= amount;}
     virtual void startSession() = 0;
     virtual string getClassName() = 0;
     virtual ~ATM() = default;
@@ -321,6 +302,75 @@ vector<ATM*> atmData;
 
 
 
+
+
+/*-------------- Methods of Session Class --------------*/
+
+void Session::Deposit(unsigned long long amount) {
+    unsigned long long fee = 0;
+    if (!primarySignal) fee = 500;
+    atm->plusMoney(amount);
+    account->plusMoney(amount - fee);
+    DepositTransaction newTransaction(account, amount);
+    account->addTransaction(&newTransaction);
+    transactionHistoryOfSession.push_back(newTransaction);
+    cout <<"\n";
+    cout << newTransaction.getInformation() << endl;
+    cout << "Current Available Funds : " << account->getFundInfo() << " won" << endl;
+}
+
+void Session::Withdrawal(unsigned long long amount) {
+    unsigned long long fee = 500;
+    if (!primarySignal) fee = 1000;
+    if (atm->getCashAmount() < amount) {
+        cout << "\nOur ATM doesn't have enough money." << endl;
+    }
+    else if (amount + fee > account->getFundInfo()) {
+        cout << "\nYou don't have enough money." << endl;
+    }
+    else {
+        account->minusMoney(amount + fee);
+        WithdrawalTransaction newTransaction(account, amount);
+        account->addTransaction(&newTransaction);
+        transactionHistoryOfSession.push_back(newTransaction);
+        cout <<"\n";
+        cout << newTransaction.getInformation() << endl;
+        withdrawalCount ++;
+        cout << "Current Available Funds : " << account->getFundInfo() << " won" << endl;
+    }
+}
+
+void Session::CashTransfer(unsigned long long amount, Account* destination) {
+    atm->plusMoney(amount);
+    destination->plusMoney(amount);
+    CashTransferTransaction newTransaction(destination, account, amount);
+    destination->addTransaction(&newTransaction);
+    transactionHistoryOfSession.push_back(newTransaction);
+    cout <<"\n";
+    cout << newTransaction.getInformation() << endl;
+}
+
+void Session::AccountTransfer(unsigned long long amount, Account* destination) {
+    unsigned long long fee;
+    string accountNum = findBank(account->getAccountNumber())->getBankName();
+    string destNum = findBank(destination->getAccountNumber())->getBankName();
+    if ( (accountNum.compare(destNum) == 0) && (primarySignal == true) ) fee = 1500;
+    else if ( (accountNum.compare(destNum) == 0) && (primarySignal == false) ) fee = 2500;
+    else fee = 2000;
+    if (amount + fee > account->getFundInfo()) {
+        cout << "You don't have enough money." << endl;
+    } else {
+        account->minusMoney(amount + fee);
+        destination->plusMoney(amount);
+        AccountTransferTransaction newTransaction(destination, account, amount);
+        destination->addTransaction(&newTransaction);
+        account->addTransaction(&newTransaction);
+        transactionHistoryOfSession.push_back(newTransaction);
+        cout <<"\n";
+        cout << newTransaction.getInformation() << endl;
+        cout << "Current Available Funds : " << account->getFundInfo() << " won" << endl;
+    }
+}
 
 
 /*-------------- Children Classes of Session Class --------------*/
@@ -336,138 +386,236 @@ public:
 
 class EnglishSession : public Session {
 public:
-    EnglishSession(ATM* atm) {
+    EnglishSession(ATM* iatm) {
+        atm = iatm;
+        primarySignal = true;
         authorizationCount = 0;
+        withdrawalCount = 0;
         authorizationSignal = true;
+        bool validAccount = true;
         string inputAccount;
         cout << "Enter your Account Number\n" << endl;
         cout << "Account Number : ";
         cin >> inputAccount;
-        if (atm->getSingleInfo() == 0) account = findBank(atm->getPrimaryBankInfo())->findAccount(inputAccount);
-        else{
-            cout << "\n--------------------------------------------------\n" << endl;
-            cout << "Choose your bank number of this account" << endl;
-            for (int i = 0; i < bankData.size(); i++) {
-                if (i % 3 == 0) cout << "\n";
-                cout << right << setfill('0') << setw(2) << i+1 << left << setfill(' ') << setw(8) << bankData[i].getBankName() << "    ";
-            }
-            cout << "\n";
-            cout << "Enter the bank number : ";
-            int bankNum;
-            cin >> bankNum;
-            account = bankData[bankNum-1].findAccount(inputAccount);
-        }
-        for (int i = 1; i < 4; i++) {
-            string inputPassword;
-            cout << "\n--------------------------------------------------\n" << endl;
-            cout << "Enter your Account Password\n" << endl;
-            cout << "Password : ";
-            cin >> inputPassword;
-            if (Authorization(inputPassword)) {
-                authorizationSignal = true;
-                break;
-            }
-            else {
-                authorizationSignal = false;
-                authorizationCount ++;
-                cout << "\n" << authorizationCount << " Authorization Fail" << endl;
-            }
-        }
-        if (authorizationSignal == false) {
-            cout << "\n--------------------------------------------------\n" << endl;
-            cout << "Authorization Fail, " << endl;
+        
+        if (findAccount(inputAccount) == nullptr) {
+            cout << "Do not exist this account number\n" << endl;
         }
         else {
-            bool sessionExitSignal = true;
-            while (sessionExitSignal) {
+            Bank* temp = findAccount(inputAccount);
+            if ( (atm->getPrimaryBankInfo()).compare(temp->getBankName()) == 0 ) {
+                account = temp->findAccountOfBank(inputAccount);
+            } else {
+                if (atm->getSingleInfo() == 0) {
+                    cout << "You cannot use this account in here." << endl;
+                } else {
+                    primarySignal = false;
+                    account = temp->findAccountOfBank(inputAccount);
+                }
+            }
+        }
+        if (validAccount) {
+            for (int i = 1; i < 4; i++) {
+                string inputPassword;
                 cout << "\n--------------------------------------------------\n" << endl;
-                cout << "Transaction List\n" << endl;
-                cout << "1. Deposit" << endl;
-                cout << "2. Withdrawal" << endl;
-                cout << "3. Transfer" << endl;
-                cout << "4. Session Exit" << endl;
-                cout << "\n";
-                cout << "Enter the transaction number which you want: ";
-                int transactionNum;
-                cin >> transactionNum;
-                
-                
-                if (transactionNum == 1) { // Deposit
+                cout << "Enter your Account Password\n" << endl;
+                cout << "Password : ";
+                cin >> inputPassword;
+                if (Authorization(inputPassword)) {
+                    authorizationSignal = true;
+                    break;
+                }
+                else {
+                    authorizationSignal = false;
+                    authorizationCount ++;
+                    cout << "\n" << authorizationCount << " Authorization Fail" << endl;
+                }
+            }
+            if (authorizationSignal == false) {
+                cout << "\n--------------------------------------------------\n" << endl;
+                cout << "Authorization Fail, " << endl;
+            }
+            else {
+                bool sessionExitSignal = true;
+                while (sessionExitSignal) {
                     cout << "\n--------------------------------------------------\n" << endl;
-                    cout << "You choose the Deposit Transaction." << endl;
-                    cout << "Please enter the amount what you want to deposit." << endl;
-                    cout << "Amount : ";
-                    unsigned long long inAmount;
-                    cin >> inAmount;
-                    Deposit(inAmount);
+                    cout << "Transaction List\n" << endl;
+                    cout << "1. Deposit" << endl;
+                    cout << "2. Withdrawal" << endl;
+                    cout << "3. Transfer" << endl;
+                    cout << "4. Transaction History" << endl;
+                    cout << "5. Session Exit" << endl;
+                    cout << "\n";
+                    cout << "Enter the transaction number which you want: ";
+                    int transactionNum;
+                    cin >> transactionNum;
                     
                     
-                } else if (transactionNum == 2) { // Withdrawal
-                    cout << "\n--------------------------------------------------\n" << endl;
-                    cout << "You choose the Withdrawal Transaction." << endl;
-                    cout << "Please enter the amount what you want to withdrawal." << endl;
-                    cout << "Amount : ";
-                    unsigned long long inAmount;
-                    cin >> inAmount;
-                    Withdrawal(inAmount);
-                    
-                    
-                } else if (transactionNum == 3) { // Transfer
-                    cout << "\n--------------------------------------------------\n" << endl;
-                    cout << "You choose the Transfer Transaction.\n" << endl;
-                    cout << "1. Account Transfer (Account to Account)" << endl;
-                    cout << "2. Cash Transfer (Cash to Account)\n" << endl;
-                    cout << "Please enter the kind of the Transfer : " << endl;
-                    int transferNum;
-                    cin >> transferNum;
-                    
-                    if (transferNum == 1) { // Account Transfer
+                    if (transactionNum == 1) { // Deposit
                         cout << "\n--------------------------------------------------\n" << endl;
-                        cout << "You choose the Account Transfer Transaction." << endl;
-                        cout << "Please enter the amount what you want to transfer." << endl;
-                        cout << "Amount : ";
+                        cout << "You select the Deposit Transaction." << endl;
+                        cout << "You can use Cash / Check.\n" << endl;
+                        cout << "Service List\n" << endl;
+                        cout << "1. Cash  Deposit Service" << endl;
+                        cout << "2. Check Deposit Service\n" << endl;
+                        cout << "Please enter the number of service : ";
+                        int x;
+                        cin >> x;
                         unsigned long long inAmount;
-                        cin >> inAmount;
-                        cout << "Please enter the bank name of destination account : ";
-                        string inDestName;
-                        cin >> inDestName;
-                        cout << "Please enter the destination account : ";
-                        string inDest;
-                        cin >> inDest;
-                        AccountTransfer(inAmount, findBank(inDestName)->findAccount(inDest));
+                        if (x == 1) {
+                            while (true) {
+                                cout << "\nPlease enter the number of 10,000 won bills.\n" << endl;
+                                cout << "The number of bills : ";
+                                int numBill;
+                                cin >> numBill;
+                                if (numBill <= 50) {inAmount = 10000 * numBill; break;}
+                                else {cout << "\nYou over a limit in the number of cash that can be deposited per transaction." << endl;}
+                            }
+                            Deposit(inAmount);
+                        } else if (x == 2) {
+                            while (true) {
+                                cout << "\nPlease enter the number of 100,000 won checks.\n" << endl;
+                                cout << "The number of checks : ";
+                                int numBill;
+                                cin >> numBill;
+                                if (numBill <= 30) {inAmount = 100000 * numBill; break;}
+                                else {cout << "\nYou over a limit in the number of check that can be deposited per transaction." << endl;}
+                            }
+                            Deposit(inAmount);
+                        } else {cout << "\nIt's an invalid number. Please retry." << endl;}
                         
-                    } else if (transferNum == 2) { // Cash Transfer
-                        cout << "\n--------------------------------------------------\n" << endl;
-                        cout << "You choose the Cash Transfer Transaction." << endl;
-                        cout << "Please enter the amount what you want to transfer." << endl;
-                        cout << "Amount : ";
-                        unsigned long long inAmount;
-                        cin >> inAmount;
-                        cout << "Please enter the bank name of destination account : ";
-                        string inDestName;
-                        cin >> inDestName;
-                        cout << "Please enter the destination account : ";
-                        string inDest;
-                        cin >> inDest;
-                        CashTransfer(inAmount, findBank(inDestName)->findAccount(inDest));
                         
-                    }  else { // Exception
+                    } else if (transactionNum == 2) { // Withdrawal
+                        if (withdrawalCount == 3) cout << "\nYou over a limit in the number of withdrawal of fund per session." << endl;
+                        else {
+                            unsigned long long inAmount;
+                            int aNum;
+                            while (true) {
+                                cout << "\n--------------------------------------------------\n" << endl;
+                                cout << "You select the Withdrawal Transaction.\n" << endl;
+                                cout << "Select the amount what you want to withdrawal.\n" << endl;
+                                cout << "1. 10,000 won     2. 20,000 won     3. 30,000 won" << endl;
+                                cout << "4. 40,000 won     5. 50,000 won     6. 100,000 won" << endl;
+                                cout << "7. Other Amount\n" << endl;
+                                cout << "Enter the number : ";
+                                cin >> aNum;
+                                if (aNum == 1) {inAmount = 10000;}
+                                else if (aNum == 2) {inAmount = 20000; break;}
+                                else if (aNum == 3) {inAmount = 30000; break;}
+                                else if (aNum == 4) {inAmount = 40000; break;}
+                                else if (aNum == 5) {inAmount = 50000; break;}
+                                else if (aNum == 6) {inAmount = 100000; break;}
+                                else if (aNum == 7) {
+                                    while (true) {
+                                        cout << "Enter the amount in units of 10,000 won : ";
+                                        cin >> inAmount;
+                                        if ((inAmount % 10000 == 0) && (inAmount <= 500000)) break;
+                                        if (inAmount > 500000) cout << "You over a limit in the amount of withdrawal of fund per transaction.\n" << endl;
+                                        if (inAmount % 10000 != 0) cout << "You should enter the amount in units of 10,000 won.\n" << endl;
+                                    }
+                                    break;
+                                }
+                                cout << "It's an invalid number. Please retry." << endl;
+                            }
+                            Withdrawal(inAmount);
+                        }
+                        
+                        
+                        
+                    } else if (transactionNum == 3) { // Transfer
                         cout << "\n--------------------------------------------------\n" << endl;
-                        cout << "It's an invalid number. Please retry." << endl;
+                        cout << "You select the Transfer Transaction.\n" << endl;
+                        cout << "1. Account Transfer (Account to Account)" << endl;
+                        cout << "2. Cash Transfer (Cash to Account)\n" << endl;
+                        cout << "Please enter the kind of the Transfer : " << endl;
+                        int transferNum;
+                        cin >> transferNum;
+                        
+                        if (transferNum == 1) { // Account Transfer
+                            cout << "\n--------------------------------------------------\n" << endl;
+                            cout << "You select the Account Transfer Transaction." << endl;
+                            cout << "Please enter the amount what you want to transfer." << endl;
+                            cout << "Amount : ";
+                            unsigned long long inAmount;
+                            cin >> inAmount;
+                            cout << "Please enter the bank name of destination account : ";
+                            string inDestName;
+                            cin >> inDestName;
+                            cout << "Please enter the destination account : ";
+                            string inDest;
+                            cin >> inDest;
+                            AccountTransfer(inAmount, findBank(inDestName)->findAccountOfBank(inDest));
+                            
+                        } else if (transferNum == 2) { // Cash Transfer
+                            unsigned long long inAmount;
+                            int aNum;
+                            while (true) {
+                                cout << "\n--------------------------------------------------\n" << endl;
+                                cout << "You select the Cash Transfer Transaction.\n" << endl;
+                                cout << "Select the amount what you want to transfer.\n" << endl;
+                                cout << "1. 10,000 won     2. 20,000 won     3. 30,000 won" << endl;
+                                cout << "4. 40,000 won     5. 50,000 won     6. 100,000 won" << endl;
+                                cout << "7. Other Amount\n" << endl;
+                                cout << "Enter the number : ";
+                                cin >> aNum;
+                                if (aNum == 1) {inAmount = 10000;}
+                                else if (aNum == 2) {inAmount = 20000; break;}
+                                else if (aNum == 3) {inAmount = 30000; break;}
+                                else if (aNum == 4) {inAmount = 40000; break;}
+                                else if (aNum == 5) {inAmount = 50000; break;}
+                                else if (aNum == 6) {inAmount = 100000; break;}
+                                else if (aNum == 7) {
+                                    while (true) {
+                                        cout << "Enter the amount in units of 10,000 won : ";
+                                        cin >> inAmount;
+                                        if ((inAmount % 10000 == 0) && (inAmount <= 500000)) break;
+                                        if (inAmount > 500000) cout << "You over a limit in the amount of transfer of fund per transaction.\n" << endl;
+                                        if (inAmount % 10000 != 0) cout << "You should enter the amount in units of 10,000 won.\n" << endl;
+                                    }
+                                    break;
+                                }
+                                cout << "It's an invalid number. Please retry." << endl;
+                            }
+                            cout << "Please enter the bank name of destination account : ";
+                            string inDestName;
+                            cin >> inDestName;
+                            cout << "Please enter the destination account : ";
+                            string inDest;
+                            cin >> inDest;
+                            CashTransfer(inAmount, findBank(inDestName)->findAccountOfBank(inDest));
+                            
+                        }  else { // Exception
+                            cout << "\n--------------------------------------------------\n" << endl;
+                            cout << "It's an invalid number. Please retry." << endl;
+                        }
+                        
+                        
+                    } else if (transactionNum == 4) { // Transaction History
+                        cout << "\n--------------------------------------------------\n" << endl;
+                        cout << "You select the Transaction History.\n" << endl;
+                        cout << "List\n" << endl;
+                        vector<Transaction> temp =account->getTransactionHistoryOfAccount();
+                        if (temp.size() == 0) {
+                            cout << "This account doesn't have any transaction history.\n" << endl;
+                        } else {
+                            for (int i = 0; i < temp.size(); i++) {
+                                cout << temp[i].getInformation() << endl;
+                            }
+                            cout << "\nEnd of List\n\n" << endl;
+                        }
+                        
+                    } else if (transactionNum == 5) { // Session Exit
+                        sessionExitSignal = false;
                     }
                     
                     
-                } else if (transactionNum == 4) { // Session Exit
-                    sessionExitSignal = false;
+                    else { // Exception
+                        cout << "\n--------------------------------------------------\n" << endl;
+                        cout << "It's an invalid number. Please retry." << endl;
+                    }
                 }
-                
-                
-                else { // Exception
-                    cout << "\n--------------------------------------------------\n" << endl;
-                    cout << "It's an invalid number. Please retry." << endl;
-                }
+                atm->addTransaction(transactionHistoryOfSession);
             }
-            atm->addTransaction(transactionHistoryOfSession);
         }
     }
 };
@@ -536,7 +684,7 @@ public:
     string getClassName() {return "Bilingual";}
     void startSession() {
         while (true) {
-            cout << "Choose the Language\n" << endl;
+            cout << "Select the Language\n" << endl;
             cout << "1. English" << endl;
             cout << "2. Korean" << endl;
             cout << "3. Go to HOME\n" << endl;
@@ -726,7 +874,7 @@ int main(int argc, char* argv[]) {
     bool programEndSignal = true;
     
     while (programEndSignal) {
-        cout << "Choose the ATM" << endl;
+        cout << "Select the ATM" << endl;
         for (int i = 0; i < atmData.size(); i++) {
             if (i % 2 == 0) {
                 cout << "\n";
