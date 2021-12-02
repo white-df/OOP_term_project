@@ -14,6 +14,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -44,7 +45,7 @@ public:
     ~Account() {}
     string getAccountNumber() { return accountNumber; }
     bool check_pw(string inPw) {
-        if (accountPw == inPw) return true;
+        if (accountPw.compare(inPw) == 0) return true;
         else return false;
     }
     void plusMoney(double amount) { availableFunds += amount; }
@@ -70,8 +71,8 @@ protected:
     static double transactionCnt;
     double ID = transactionCnt;
     double Amount = 0;
-    string description = "unknown";
-    Transaction* transaction = nullptr;
+    string description = "#";
+//    Transaction* transaction = nullptr;
     Account account;
 public:
     double getID() { return ID; }
@@ -95,12 +96,13 @@ public:
 DepositTransaction::DepositTransaction(Account acc, double amount) {
     account = acc;
     Amount = amount;
-    description.append(to_string(transaction->getID()));
-    description.append(account.getAccountNumber());
-    description.append(" deposited ");
-    description.append(to_string(amount));
-    description.append("$");
     ID = transactionCnt++;
+    description.append(to_string(int(ID)));
+    description.append(". Account number '");
+    description.append(account.getAccountNumber());
+    description.append("' deposited ");
+    description.append(to_string(amount));
+    description.append(" $");
 }
 
 //string DepositTransaction::getInformation() {
@@ -118,12 +120,13 @@ public:
 WithdrawalTransaction::WithdrawalTransaction(Account acc, double amount) {
     account = acc;
     Amount = amount;
-    description.append(to_string(transaction->getID()));
-    description.append(account.getAccountNumber());
-    description.append(" withdrew ");
-    description.append(to_string(transaction->getAmount()));
-    description.append("$");
     ID = transactionCnt++;
+    description.append(to_string(int(ID)));
+    description.append(". Account number '");
+    description.append(account.getAccountNumber());
+    description.append("' withdrew ");
+    description.append(to_string(amount));
+    description.append(" $");
 }
 
 
@@ -146,13 +149,14 @@ AccountTransferTransaction::AccountTransferTransaction(Account destacc, Account 
     destaccount = destacc;
     account = acc;
     Amount = amount;
-    description.append(to_string(transaction->getID()));
-    description.append(account.getAccountNumber());
-    description.append(" transfer to ");
-    description.append(destaccount.getAccountNumber()).append(" ");
-    description.append(to_string(transaction->getAmount()));
-    description.append("$");
     ID = transactionCnt++;
+    description.append(to_string(int(ID)));
+    description.append(". Account number '");
+    description.append(account.getAccountNumber());
+    description.append("' transfer to ");
+    description.append(destaccount.getAccountNumber()).append(" ");
+    description.append(to_string(amount));
+    description.append(" $");
 }
 
 
@@ -168,13 +172,14 @@ public:
 CashTransferTransaction::CashTransferTransaction(Account destacc, Account acc, double amount) {
     destaccount = destacc;
     Amount = amount;
-    description.append(to_string(transaction->getID()));
-    description.append(account.getAccountNumber());
-    description.append(" transfer to ");
-    description.append(destaccount.getAccountNumber()).append(" ");
-    description.append(to_string(transaction->getAmount()));
-    description.append("$");
     ID = transactionCnt++;
+    description.append(to_string(int(ID)));
+    description.append(". Account number '");
+    description.append(account.getAccountNumber());
+    description.append("' transfer to ");
+    description.append(destaccount.getAccountNumber()).append(" ");
+    description.append(to_string(amount));
+    description.append(" $");
 }
 
 //string CashTransferTransaction::getInformation() {
@@ -215,12 +220,12 @@ Account Bank::findAccount(string account) {
 
 vector<Bank> bankData;
 
-Bank findBank(string name) {
+Bank* findBank(string name) {
     int i;
     for (i = 0; i < bankData.size(); i++) {
         if (bankData[i].getBankName().compare(name) == 0) break;
     }
-    return bankData[i];
+    return &bankData[i];
 }
 
 
@@ -291,7 +296,7 @@ class ATM {
 protected:
     static int atmCnt;
     int serialNum; // ATM 시리얼 넘버
-    Bank primaryBank; // 주거래 은행
+    Bank* primaryBank; // 주거래 은행
     unsigned long long cashAmount;  // ATM에 들어있는 현금
     vector<vector<Transaction>> transactionHistoryOfATM; // ATM 전체 transaction history (Admin에서 접근 가능)
     string AdminNum; // Admin 넘버
@@ -299,13 +304,14 @@ protected:
     int SingleOrMulti; // 0: Single , 1: Multi
 public:
     ATM() {}
-    string getPrimaryBankInfo() {return primaryBank.getBankName();}
+    string getPrimaryBankInfo() {return primaryBank->getBankName();}
     int getSerialNum() {return serialNum;}
-    Bank getPrimaryBank() {return primaryBank;}
+    Bank* getPrimaryBank() {return primaryBank;}
     unsigned long long getCashAmount() {return cashAmount;}
     int getSingleInfo() {return SingleOrMulti;}
     void addTransaction(vector<Transaction> transac) {transactionHistoryOfATM.push_back(transac);}
     virtual void startSession() = 0;
+    virtual string getClassName() = 0;
     virtual ~ATM() = default;
 };
 
@@ -334,12 +340,27 @@ public:
         authorizationCount = 0;
         authorizationSignal = true;
         string inputAccount;
-        cout << "Enter your Account Number" << endl;
+        cout << "Enter your Account Number\n" << endl;
         cout << "Account Number : ";
         cin >> inputAccount;
+        if (atm->getSingleInfo() == 0) account = findBank(atm->getPrimaryBankInfo())->findAccount(inputAccount);
+        else{
+            cout << "\n--------------------------------------------------\n" << endl;
+            cout << "Choose your bank number of this account" << endl;
+            for (int i = 0; i < bankData.size(); i++) {
+                if (i % 3 == 0) cout << "\n";
+                cout << right << setfill('0') << setw(2) << i+1 << left << setfill(' ') << setw(8) << bankData[i].getBankName() << "    ";
+            }
+            cout << "\n";
+            cout << "Enter the bank number : ";
+            int bankNum;
+            cin >> bankNum;
+            account = bankData[bankNum-1].findAccount(inputAccount);
+        }
         for (int i = 1; i < 4; i++) {
             string inputPassword;
-            cout << "Enter your Account Password" << endl;
+            cout << "\n--------------------------------------------------\n" << endl;
+            cout << "Enter your Account Password\n" << endl;
             cout << "Password : ";
             cin >> inputPassword;
             if (Authorization(inputPassword)) {
@@ -349,16 +370,18 @@ public:
             else {
                 authorizationSignal = false;
                 authorizationCount ++;
-                cout << authorizationCount << " Authorization Fail" << endl;
+                cout << "\n" << authorizationCount << " Authorization Fail" << endl;
             }
         }
         if (authorizationSignal == false) {
+            cout << "\n--------------------------------------------------\n" << endl;
             cout << "Authorization Fail, " << endl;
         }
         else {
             bool sessionExitSignal = true;
             while (sessionExitSignal) {
-                cout << "Transaction List" << endl;
+                cout << "\n--------------------------------------------------\n" << endl;
+                cout << "Transaction List\n" << endl;
                 cout << "1. Deposit" << endl;
                 cout << "2. Withdrawal" << endl;
                 cout << "3. Transfer" << endl;
@@ -370,6 +393,7 @@ public:
                 
                 
                 if (transactionNum == 1) { // Deposit
+                    cout << "\n--------------------------------------------------\n" << endl;
                     cout << "You choose the Deposit Transaction." << endl;
                     cout << "Please enter the amount what you want to deposit." << endl;
                     cout << "Amount : ";
@@ -379,6 +403,7 @@ public:
                     
                     
                 } else if (transactionNum == 2) { // Withdrawal
+                    cout << "\n--------------------------------------------------\n" << endl;
                     cout << "You choose the Withdrawal Transaction." << endl;
                     cout << "Please enter the amount what you want to withdrawal." << endl;
                     cout << "Amount : ";
@@ -388,42 +413,46 @@ public:
                     
                     
                 } else if (transactionNum == 3) { // Transfer
-                    cout << "You choose the Transfer Transaction." << endl;
+                    cout << "\n--------------------------------------------------\n" << endl;
+                    cout << "You choose the Transfer Transaction.\n" << endl;
                     cout << "1. Account Transfer (Account to Account)" << endl;
-                    cout << "2. Cash Transfer (Cash to Account)" << endl;
+                    cout << "2. Cash Transfer (Cash to Account)\n" << endl;
                     cout << "Please enter the kind of the Transfer : " << endl;
                     int transferNum;
                     cin >> transferNum;
                     
                     if (transferNum == 1) { // Account Transfer
+                        cout << "\n--------------------------------------------------\n" << endl;
                         cout << "You choose the Account Transfer Transaction." << endl;
                         cout << "Please enter the amount what you want to transfer." << endl;
                         cout << "Amount : ";
                         int inAmount;
                         cin >> inAmount;
-                        cout << "Please enter the bank name of destination account : " << endl;
+                        cout << "Please enter the bank name of destination account : ";
                         string inDestName;
                         cin >> inDestName;
                         cout << "Please enter the destination account : ";
                         string inDest;
                         cin >> inDest;
-                        AccountTransfer(inAmount, findBank(inDestName).findAccount(inDest));
+                        AccountTransfer(inAmount, findBank(inDestName)->findAccount(inDest));
                         
                     } else if (transferNum == 2) { // Cash Transfer
+                        cout << "\n--------------------------------------------------\n" << endl;
                         cout << "You choose the Cash Transfer Transaction." << endl;
                         cout << "Please enter the amount what you want to transfer." << endl;
                         cout << "Amount : ";
                         int inAmount;
                         cin >> inAmount;
-                        cout << "Please enter the bank name of destination account : " << endl;
+                        cout << "Please enter the bank name of destination account : ";
                         string inDestName;
                         cin >> inDestName;
                         cout << "Please enter the destination account : ";
                         string inDest;
                         cin >> inDest;
-                        CashTransfer(inAmount, findBank(inDestName).findAccount(inDest));
+                        CashTransfer(inAmount, findBank(inDestName)->findAccount(inDest));
                         
                     }  else { // Exception
+                        cout << "\n--------------------------------------------------\n" << endl;
                         cout << "It's an invalid number. Please retry." << endl;
                     }
                     
@@ -434,6 +463,7 @@ public:
                 
                 
                 else { // Exception
+                    cout << "\n--------------------------------------------------\n" << endl;
                     cout << "It's an invalid number. Please retry." << endl;
                 }
             }
@@ -459,6 +489,7 @@ public:
         SingleOrMulti = 0;
     }
     void startSession() {}
+    string getClassName() {return "Single";}
 };
 
 /*---------- Multi Bank ATM Class -----------*/
@@ -472,6 +503,7 @@ public:
         SingleOrMulti = 1;
     }
     void startSession() {}
+    string getClassName() {return "Multi";}
 };
 
 /*---------- Unilingual ATM Class -----------*/
@@ -484,6 +516,7 @@ public:
         cashAmount = atm->getCashAmount();
         SingleOrMulti = atm->getSingleInfo();
     }
+    string getClassName() {return "Unilingual";}
     void startSession() {
         EnglishSession newSession(this);
         session = newSession;
@@ -500,19 +533,22 @@ public:
         cashAmount = atm->getCashAmount();
         SingleOrMulti = atm->getSingleInfo();
     }
+    string getClassName() {return "Bilingual";}
     void startSession() {
         while (true) {
-            cout << "Choose the Language" << endl;
+            cout << "Choose the Language\n" << endl;
             cout << "1. English" << endl;
             cout << "2. Korean" << endl;
-            cout << "3. Go to HOME" << endl;
+            cout << "3. Go to HOME\n" << endl;
             cout << "Please Enter the Number of Language : ";
             int languageNum;
             cin >> languageNum;
             if (languageNum == 1) {
+                cout << "\n--------------------------------------------------\n" << endl;
                 EnglishSession newSession(this);
                 session = newSession;
             } else if (languageNum == 2) {
+                cout << "\n--------------------------------------------------\n" << endl;
                 KoreanSession newSession(this);
                 session = newSession;
             } else if (languageNum == 3) {
@@ -596,7 +632,7 @@ void readAccountData(ifstream& fin) {
             getline(fin, str);
             vector<string> splitted = split(str, ' ');
             Account newAccount(splitted[1], splitted[2], splitted[3], splitted[4]);
-            findBank(splitted[0]).addAccount(newAccount);
+            findBank(splitted[0])->addAccount(newAccount);
         }
     }
 }
@@ -692,16 +728,22 @@ int main(int argc, char* argv[]) {
     while (programEndSignal) {
         cout << "Choose the ATM" << endl;
         for (int i = 0; i < atmData.size(); i++) {
-            if (i % 3 == 0) {
+            if (i % 2 == 0) {
                 cout << "\n";
             }
-            cout << i+1 << ". " << atmData[i]->getPrimaryBankInfo() << " ATM    ";
+            cout << right << setfill('0') << setw(2) << i+1 << ". " << right << setfill(' ') << setw(8) << atmData[i]->getPrimaryBankInfo() << " ";
+            if (atmData[i]->getSingleInfo() == 0) {
+                cout << "Single  ";
+            } else cout << "Multi   ";
+            cout << left << setw(10) << atmData[i]->getClassName() << " ATM      ";
         }
-        cout << atmData.size() << ". Program Exit\n" << endl;
+        cout << "\n";
+        cout << atmData.size()+1 << ".  Program Exit\n" << endl;
         cout << "Please Enter the Number of ATM : ";
         int choiceAtm;
         cin >> choiceAtm;
-        if (choiceAtm == atmData.size()) {
+        cout << "\n--------------------------------------------------\n" << endl;
+        if (choiceAtm == atmData.size()+1) {
             programEndSignal = false;
         }
         else {
