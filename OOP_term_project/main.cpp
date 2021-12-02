@@ -32,7 +32,7 @@ protected:
     string accountNumber = "";
     string accountPw = "";
     string userName = "";
-    double availableFunds = 0;
+    unsigned long long availableFunds = 0;
     vector<Transaction> transactionHistoryOfAccount;
 public:
     Account() {}
@@ -40,7 +40,7 @@ public:
         accountNumber = aNum;
         accountPw = aPW;
         userName = uName;
-        availableFunds = double(stoi(funds));
+        availableFunds = stoull(funds);
     }
     ~Account() {}
     string getAccountNumber() { return accountNumber; }
@@ -68,21 +68,21 @@ public:
 //class Transaction : public Account {
 class Transaction {
 protected:
-    static double transactionCnt;
-    double ID = transactionCnt;
-    double Amount = 0;
+    static unsigned long long transactionCnt;
+    unsigned long long ID = transactionCnt;
+    unsigned long long Amount = 0;
     string description = "#";
 //    Transaction* transaction = nullptr;
     Account account;
 public:
-    double getID() { return ID; }
-    double getAmount() { return Amount; }
+    unsigned long long getID() { return ID; }
+    unsigned long long getAmount() { return Amount; }
     string getInformation() {return description;}
 //    virtual string getInformation() = 0;
 //    virtual ~Transaction() = default;
 };
 
-double Transaction::transactionCnt{ 1 };
+unsigned long long Transaction::transactionCnt{ 1 };
 
 
 /*------------ Children Classes of Transaction Class ------------*/
@@ -90,14 +90,14 @@ double Transaction::transactionCnt{ 1 };
 /*-------- Deposit Transaction Class --------*/
 class DepositTransaction : public Transaction {
 public:
-    DepositTransaction(Account acc, double amount);
+    DepositTransaction(Account acc, unsigned long long amount);
 //    string getInformation();
 };
-DepositTransaction::DepositTransaction(Account acc, double amount) {
+DepositTransaction::DepositTransaction(Account acc, unsigned long long amount) {
     account = acc;
     Amount = amount;
     ID = transactionCnt++;
-    description.append(to_string(int(ID)));
+    description.append(to_string(ID));
     description.append(". Account number '");
     description.append(account.getAccountNumber());
     description.append("' deposited ");
@@ -113,15 +113,15 @@ DepositTransaction::DepositTransaction(Account acc, double amount) {
 /*------- Withdrawal Transaction Class ------*/
 class WithdrawalTransaction : public Transaction {
 public:
-    WithdrawalTransaction(Account acc, double amount);
+    WithdrawalTransaction(Account acc, unsigned long long amount);
 //    string getInformation();
 };
 
-WithdrawalTransaction::WithdrawalTransaction(Account acc, double amount) {
+WithdrawalTransaction::WithdrawalTransaction(Account acc, unsigned long long amount) {
     account = acc;
     Amount = amount;
     ID = transactionCnt++;
-    description.append(to_string(int(ID)));
+    description.append(to_string(ID));
     description.append(". Account number '");
     description.append(account.getAccountNumber());
     description.append("' withdrew ");
@@ -142,15 +142,15 @@ protected:
 
 class AccountTransferTransaction : public TransferTransaction {
 public:
-    AccountTransferTransaction(Account destacc, Account account, double amount);
+    AccountTransferTransaction(Account destacc, Account account, unsigned long long amount);
 //    string getInformation();
 };
-AccountTransferTransaction::AccountTransferTransaction(Account destacc, Account acc, double amount) {
+AccountTransferTransaction::AccountTransferTransaction(Account destacc, Account acc, unsigned long long amount) {
     destaccount = destacc;
     account = acc;
     Amount = amount;
     ID = transactionCnt++;
-    description.append(to_string(int(ID)));
+    description.append(to_string(ID));
     description.append(". Account number '");
     description.append(account.getAccountNumber());
     description.append("' transfer to ");
@@ -166,14 +166,14 @@ AccountTransferTransaction::AccountTransferTransaction(Account destacc, Account 
 
 class CashTransferTransaction : public TransferTransaction {
 public:
-    CashTransferTransaction(Account destaccount, Account account, double amount);
+    CashTransferTransaction(Account destaccount, Account account, unsigned long long amount);
 //    string getInformation();
 };
-CashTransferTransaction::CashTransferTransaction(Account destacc, Account acc, double amount) {
+CashTransferTransaction::CashTransferTransaction(Account destacc, Account acc, unsigned long long amount) {
     destaccount = destacc;
     Amount = amount;
     ID = transactionCnt++;
-    description.append(to_string(int(ID)));
+    description.append(to_string(ID));
     description.append(". Account number '");
     description.append(account.getAccountNumber());
     description.append("' transfer to ");
@@ -245,14 +245,14 @@ protected:
     int withdrawalCount;
 public:
     Session() {}
-    void Deposit(double amount);
-    void Withdrawal(double amount);
-    void CashTransfer(double amount, Account destination);
-    void AccountTransfer(double amount, Account destination);
+    void Deposit(unsigned long long amount);
+    void Withdrawal(unsigned long long amount);
+    void CashTransfer(unsigned long long amount, Account destination);
+    void AccountTransfer(unsigned long long amount, Account destination);
     bool Authorization(string password) {return account.check_pw(password);}
 };
 
-void Session::Deposit(double amount) {
+void Session::Deposit(unsigned long long amount) {
     account.plusMoney(amount);
     DepositTransaction newTransaction(account, amount);
     account.addTransaction(&newTransaction);
@@ -260,7 +260,7 @@ void Session::Deposit(double amount) {
     cout << newTransaction.getInformation() << endl;
 }
 
-void Session::Withdrawal(double amount) {
+void Session::Withdrawal(unsigned long long amount) {
     account.minusMoney(amount);
     WithdrawalTransaction newTransaction(account, amount);
     account.addTransaction(&newTransaction);
@@ -268,7 +268,7 @@ void Session::Withdrawal(double amount) {
     cout << newTransaction.getInformation() << endl;
 }
 
-void Session::CashTransfer(double amount, Account destination) {
+void Session::CashTransfer(unsigned long long amount, Account destination) {
     destination.plusMoney(amount);
     CashTransferTransaction newTransaction(destination, account, amount);
     destination.addTransaction(&newTransaction);
@@ -276,7 +276,7 @@ void Session::CashTransfer(double amount, Account destination) {
     cout << newTransaction.getInformation() << endl;
 }
 
-void Session::AccountTransfer(double amount, Account destination) {
+void Session::AccountTransfer(unsigned long long amount, Account destination) {
     account.minusMoney(amount);
     destination.plusMoney(amount);
     AccountTransferTransaction newTransaction(destination, account, amount);
@@ -397,7 +397,7 @@ public:
                     cout << "You choose the Deposit Transaction." << endl;
                     cout << "Please enter the amount what you want to deposit." << endl;
                     cout << "Amount : ";
-                    int inAmount;
+                    unsigned long long inAmount;
                     cin >> inAmount;
                     Deposit(inAmount);
                     
@@ -407,7 +407,7 @@ public:
                     cout << "You choose the Withdrawal Transaction." << endl;
                     cout << "Please enter the amount what you want to withdrawal." << endl;
                     cout << "Amount : ";
-                    int inAmount;
+                    unsigned long long inAmount;
                     cin >> inAmount;
                     Withdrawal(inAmount);
                     
@@ -426,7 +426,7 @@ public:
                         cout << "You choose the Account Transfer Transaction." << endl;
                         cout << "Please enter the amount what you want to transfer." << endl;
                         cout << "Amount : ";
-                        int inAmount;
+                        unsigned long long inAmount;
                         cin >> inAmount;
                         cout << "Please enter the bank name of destination account : ";
                         string inDestName;
@@ -441,7 +441,7 @@ public:
                         cout << "You choose the Cash Transfer Transaction." << endl;
                         cout << "Please enter the amount what you want to transfer." << endl;
                         cout << "Amount : ";
-                        int inAmount;
+                        unsigned long long inAmount;
                         cin >> inAmount;
                         cout << "Please enter the bank name of destination account : ";
                         string inDestName;
@@ -485,7 +485,7 @@ public:
     SingleBankATM(string priName) {
         serialNum = atmCnt++;
         primaryBank = findBank(priName);
-        cashAmount = 10000000;
+        cashAmount = 100000000000000;
         SingleOrMulti = 0;
     }
     void startSession() {}
@@ -499,7 +499,7 @@ public:
     MultiBankATM(string priName) {
         serialNum = atmCnt++;
         primaryBank = findBank(priName);
-        cashAmount = 10000000;
+        cashAmount = 100000000000000;
         SingleOrMulti = 1;
     }
     void startSession() {}
