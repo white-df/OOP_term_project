@@ -258,7 +258,8 @@ protected:
     bool primarySignal; // 현재 account의 은행 정보와 ATM의 주거래 은행이 동일하면 true
 public:
     Session() {}
-    void Deposit(unsigned long long amount);
+    void CashDeposit(unsigned long long amount);
+    void CheckDeposit(unsigned long long amount);
     void Withdrawal(unsigned long long amount);
     void CashTransfer(unsigned long long amount, Account* destination);
     void AccountTransfer(unsigned long long amount, Account* destination);
@@ -291,6 +292,7 @@ public:
     void addTransaction(vector<Transaction> transac) {transactionHistoryOfATM.push_back(transac);}
     void plusMoney(unsigned long long amount) {cashAmount += amount;}
     void minusMoney(unsigned long long amount) {cashAmount -= amount;}
+    void startAdminSession();
     virtual void startSession() = 0;
     virtual string getClassName() = 0;
     virtual ~ATM() = default;
@@ -306,10 +308,22 @@ vector<ATM*> atmData;
 
 /*-------------- Methods of Session Class --------------*/
 
-void Session::Deposit(unsigned long long amount) {
+void Session::CashDeposit(unsigned long long amount) {
     unsigned long long fee = 0;
     if (!primarySignal) fee = 500;
     atm->plusMoney(amount);
+    account->plusMoney(amount - fee);
+    DepositTransaction newTransaction(account, amount);
+    account->addTransaction(&newTransaction);
+    transactionHistoryOfSession.push_back(newTransaction);
+    cout <<"\n";
+    cout << newTransaction.getInformation() << endl;
+    cout << "Current Available Funds : " << account->getFundInfo() << " won" << endl;
+}
+
+void Session::CheckDeposit(unsigned long long amount) {
+    unsigned long long fee = 0;
+    if (!primarySignal) fee = 500;
     account->plusMoney(amount - fee);
     DepositTransaction newTransaction(account, amount);
     account->addTransaction(&newTransaction);
@@ -471,7 +485,7 @@ public:
                                 if (numBill <= 50) {inAmount = 10000 * numBill; break;}
                                 else {cout << "\nYou over a limit in the number of cash that can be deposited per transaction." << endl;}
                             }
-                            Deposit(inAmount);
+                            CashDeposit(inAmount);
                         } else if (x == 2) {
                             while (true) {
                                 cout << "\nPlease enter the number of 100,000 won checks.\n" << endl;
@@ -481,7 +495,7 @@ public:
                                 if (numBill <= 30) {inAmount = 100000 * numBill; break;}
                                 else {cout << "\nYou over a limit in the number of check that can be deposited per transaction." << endl;}
                             }
-                            Deposit(inAmount);
+                            CheckDeposit(inAmount);
                         } else {cout << "\nIt's an invalid number. Please retry." << endl;}
                         
                         
@@ -593,7 +607,7 @@ public:
                     } else if (transactionNum == 4) { // Transaction History
                         cout << "\n--------------------------------------------------\n" << endl;
                         cout << "You select the Transaction History.\n" << endl;
-                        cout << "List\n" << endl;
+                        cout << "Transaction History of yout account\n" << endl;
                         vector<Transaction> temp =account->getTransactionHistoryOfAccount();
                         if (temp.size() == 0) {
                             cout << "This account doesn't have any transaction history.\n" << endl;
@@ -614,7 +628,18 @@ public:
                         cout << "It's an invalid number. Please retry." << endl;
                     }
                 }
-                atm->addTransaction(transactionHistoryOfSession);
+                cout << "\n--------------------------------------------------\n" << endl;
+                cout << "Session End. Thank you for using our ATM\n" << endl;
+                cout << "Transaction History of Session\n" << endl;
+                if (transactionHistoryOfSession.size() == 0) {
+                    cout << "This session doesn't have any transaction history.\n" << endl;
+                } else {
+                    atm->addTransaction(transactionHistoryOfSession);
+                    for (int i = 0; i < transactionHistoryOfSession.size(); i++) {
+                        cout << transactionHistoryOfSession[i].getInformation() << endl;
+                    }
+                    cout << "\nEnd of List\n\n" << endl;
+                }
             }
         }
     }
@@ -622,6 +647,48 @@ public:
 
 
 
+
+
+/*---------------- Method of ATM Class ----------------*/
+
+void ATM::startAdminSession() {
+    cout << "\n--------------------------------------------------\n" << endl;
+    cout << "You select the Admin Menu.\n" << endl;
+    cout << "Please enter the Admin Card Number." << endl;
+    cout << "=> : ";
+    string inAdmin;
+    cin >> inAdmin;
+    if (inAdmin.compare(AdminNum) == 0) {
+        while (true) {
+            cout << "\n--------------------------------------------------\n" << endl;
+            cout << "Select the admin service\n" << endl;
+            cout << "Service List" << endl;
+            cout << "1. Transaction History of ATM" << endl;
+            cout << "2. Admin Session Exit" << endl;
+            cout << "\nEnter the number : ";
+            int num;
+            cin >> num;
+            if (num == 1) {
+                if (transactionHistoryOfATM.size() == 0) {
+                    cout << "\nIt does not exist any transaction history in the ATM.\n" << endl;
+                } else {
+                    for (int i = 0; i < transactionHistoryOfATM.size(); i++) {
+                        for (int j = 0; j < transactionHistoryOfATM[i].size(); j++) {
+                            cout << transactionHistoryOfATM[i][j].getInformation() << endl;
+                        }
+                    }
+                }
+            } else if (num == 2) {
+                cout << "\nAdmin Session Exit\n" << endl;
+                break;
+            } else {
+                cout << "\nIt's an invalid number. Please Re-try.\n" << endl;
+            }
+        }
+    } else {
+        cout << "\nIt's an invalid admin card number. Please Re-try.\n" << endl;
+    }
+}
 
 
 /*---------------- Children Classes of ATM Class ----------------*/
@@ -658,11 +725,12 @@ public:
 
 class UnilingualATM : public ATM {
 public:
-    UnilingualATM(ATM* atm) {
+    UnilingualATM(ATM* atm, string admin) {
         serialNum = atm->getSerialNum();
         primaryBank = atm->getPrimaryBank();
         cashAmount = atm->getCashAmount();
         SingleOrMulti = atm->getSingleInfo();
+        AdminNum = admin;
     }
     string getClassName() {return "Unilingual";}
     void startSession() {
@@ -675,19 +743,21 @@ public:
 
 class BilingualATM : public ATM {
 public:
-    BilingualATM(ATM* atm) {
+    BilingualATM(ATM* atm, string admin) {
         serialNum = atm->getSerialNum();
         primaryBank = atm->getPrimaryBank();
         cashAmount = atm->getCashAmount();
         SingleOrMulti = atm->getSingleInfo();
+        AdminNum = admin;
     }
     string getClassName() {return "Bilingual";}
     void startSession() {
         while (true) {
-            cout << "Select the Language\n" << endl;
+            cout << "Menu\n" << endl;
             cout << "1. English" << endl;
             cout << "2. Korean" << endl;
-            cout << "3. Go to HOME\n" << endl;
+            cout << "3. Admin" << endl;
+            cout << "4. Go to HOME\n" << endl;
             cout << "Please Enter the Number of Language : ";
             int languageNum;
             cin >> languageNum;
@@ -700,6 +770,8 @@ public:
                 KoreanSession newSession(this);
                 session = newSession;
             } else if (languageNum == 3) {
+                startAdminSession();
+            } else if (languageNum == 4) {
                 break;
             } else {
                 cout << "It's an invalid number." << endl;
@@ -744,9 +816,9 @@ void readAtmData(ifstream& fin) {
                 exit(7);
             }
             if (splitted[2].compare("Bi") == 0) {
-                newAtm = new BilingualATM(newAtm);
+                newAtm = new BilingualATM(newAtm, splitted[3]);
             } else if (splitted[2].compare("Uni") == 0) {
-                newAtm = new UnilingualATM(newAtm);
+                newAtm = new UnilingualATM(newAtm, splitted[3]);
             } else {
                 cout << "입력 파일 오류" << endl;
                 exit(8);
