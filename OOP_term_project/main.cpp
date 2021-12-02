@@ -13,6 +13,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <sstream>
 
 using namespace std;
 
@@ -75,7 +76,9 @@ protected:
 public:
     double getID() { return ID; }
     double getAmount() { return Amount; }
-    virtual string getInformation() = 0;
+    string getInformation() {return description;}
+//    virtual string getInformation() = 0;
+//    virtual ~Transaction() = default;
 };
 
 double Transaction::transactionCnt{ 1 };
@@ -87,7 +90,7 @@ double Transaction::transactionCnt{ 1 };
 class DepositTransaction : public Transaction {
 public:
     DepositTransaction(Account acc, double amount);
-    string getInformation();
+//    string getInformation();
 };
 DepositTransaction::DepositTransaction(Account acc, double amount) {
     account = acc;
@@ -100,16 +103,16 @@ DepositTransaction::DepositTransaction(Account acc, double amount) {
     ID = transactionCnt++;
 }
 
-string DepositTransaction::getInformation() {
-    return description;
-} /* ex. 1 1234 5678 deposited 100$ */
-  /* ex. 2 1234 5678 withdrew 50$ */
+//string DepositTransaction::getInformation() {
+//    return description;
+//} /* ex. 1 1234 5678 deposited 100$ */
+//  /* ex. 2 1234 5678 withdrew 50$ */
 
 /*------- Withdrawal Transaction Class ------*/
 class WithdrawalTransaction : public Transaction {
 public:
     WithdrawalTransaction(Account acc, double amount);
-    string getInformation();
+//    string getInformation();
 };
 
 WithdrawalTransaction::WithdrawalTransaction(Account acc, double amount) {
@@ -124,9 +127,9 @@ WithdrawalTransaction::WithdrawalTransaction(Account acc, double amount) {
 }
 
 
-string WithdrawalTransaction::getInformation() {
-    return description;
-}
+//string WithdrawalTransaction::getInformation() {
+//    return description;
+//}
 
 /*-------- Transfer Transaction Class -------*/
 class TransferTransaction : public Transaction {
@@ -137,7 +140,7 @@ protected:
 class AccountTransferTransaction : public TransferTransaction {
 public:
     AccountTransferTransaction(Account destacc, Account account, double amount);
-    string getInformation();
+//    string getInformation();
 };
 AccountTransferTransaction::AccountTransferTransaction(Account destacc, Account acc, double amount) {
     destaccount = destacc;
@@ -153,14 +156,14 @@ AccountTransferTransaction::AccountTransferTransaction(Account destacc, Account 
 }
 
 
-string AccountTransferTransaction::getInformation() {
-    return description;
-}
+//string AccountTransferTransaction::getInformation() {
+//    return description;
+//}
 
 class CashTransferTransaction : public TransferTransaction {
 public:
     CashTransferTransaction(Account destaccount, Account account, double amount);
-    string getInformation();
+//    string getInformation();
 };
 CashTransferTransaction::CashTransferTransaction(Account destacc, Account acc, double amount) {
     destaccount = destacc;
@@ -174,9 +177,9 @@ CashTransferTransaction::CashTransferTransaction(Account destacc, Account acc, d
     ID = transactionCnt++;
 }
 
-string CashTransferTransaction::getInformation() {
-    return description;
-}
+//string CashTransferTransaction::getInformation() {
+//    return description;
+//}
 
 
 
@@ -295,7 +298,7 @@ protected:
     Session session; // 세션
     int SingleOrMulti; // 0: Single , 1: Multi
 public:
-    ATM();
+    ATM() {}
     string getPrimaryBankInfo() {return primaryBank.getBankName();}
     int getSerialNum() {return serialNum;}
     Bank getPrimaryBank() {return primaryBank;}
@@ -334,7 +337,7 @@ public:
         cout << "Enter your Account Number" << endl;
         cout << "Account Number : ";
         cin >> inputAccount;
-        for (int i = 1; i < 3; i++) {
+        for (int i = 1; i < 4; i++) {
             string inputPassword;
             cout << "Enter your Account Password" << endl;
             cout << "Password : ";
@@ -526,6 +529,18 @@ public:
 
 
 /*------------------------------------- FILE Read Function ------------------------------------*/
+vector<string> split(string input, char delimeter) {
+    vector<string> result;
+    stringstream in(input);
+    string temp;
+    
+    while (getline(in, temp, delimeter)) {
+        result.push_back(temp);
+    }
+    
+    return result;
+}
+
 void readAtmData(ifstream& fin) {
     if (!fin) {
         cout << "해당 파일이 존재하지 않습니다." << endl;
@@ -533,21 +548,20 @@ void readAtmData(ifstream& fin) {
     } else {
         while (!fin.eof()) {
             string str;
-            vector<string> splitted;
             getline(fin, str);
-            splitted.push_back(str);
+            vector<string> splitted = split(str, ' ');
             ATM* newAtm;
-            if (splitted[1].compare("Single")) {
+            if (splitted[1].compare("Single") == 0) {
                 newAtm = new SingleBankATM(splitted[0]);
-            } else if (splitted[1].compare("Multi")) {
+            } else if (splitted[1].compare("Multi") == 0) {
                 newAtm = new MultiBankATM(splitted[0]);
             } else {
                 cout << "입력 파일 오류" << endl;
                 exit(7);
             }
-            if (splitted[2].compare("Bi")) {
+            if (splitted[2].compare("Bi") == 0) {
                 newAtm = new BilingualATM(newAtm);
-            } else if (splitted[2].compare("Uni")) {
+            } else if (splitted[2].compare("Uni") == 0) {
                 newAtm = new UnilingualATM(newAtm);
             } else {
                 cout << "입력 파일 오류" << endl;
@@ -579,9 +593,8 @@ void readAccountData(ifstream& fin) {
     } else {
         while (!fin.eof()) {
             string str;
-            vector<string> splitted;
             getline(fin, str);
-            splitted.push_back(str);
+            vector<string> splitted = split(str, ' ');
             Account newAccount(splitted[1], splitted[2], splitted[3], splitted[4]);
             findBank(splitted[0]).addAccount(newAccount);
         }
@@ -602,7 +615,7 @@ int main(int argc, char* argv[]) {
      for 구문을 통해 ATM, Bank, Account 데이터를 읽어들일 거임
      .txt 파일을 읽어들일 거며 .txt 파일은 ATM, Bank, Account 총 3개
      argv[0] : 프로그램명
-     argv[1] ~ argv[3] : ATM.txt, Bank.txt, Account.txt
+     argv[1] ~ argv[3] : Bank.txt, ATM.txt, Account.txt
      -> 따라서 argc는 4
     */
     
@@ -615,10 +628,14 @@ int main(int argc, char* argv[]) {
     
     /*------------------------------------------------------- Case 1 Start -------------------------------------------------------*/
     // 해당 파일이 동일한 디렉토리에 있어야 됨.
-    ifstream f1("ATM.txt");
-    readAtmData(f1);
+        /*
+         Xcode의 경우, "Product" -> "Scheme" -> "Edit Scheme" -> "Run" -> "Options"
+         -> "Working Directory"에서 "Use custom working directory" 체크
+        */
     ifstream f2("Bank.txt");
     readBankData(f2);
+    ifstream f1("ATM.txt");
+    readAtmData(f1);
     ifstream f3("Account.txt");
     readAccountData(f3);
     /*-------------------------------------------------------- Case 1 End --------------------------------------------------------*/
