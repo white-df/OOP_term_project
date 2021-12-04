@@ -292,7 +292,8 @@ public:
     void addTransaction(vector<Transaction> transac) {transactionHistoryOfATM.push_back(transac);}
     void plusMoney(unsigned long long amount) {cashAmount += amount;}
     void minusMoney(unsigned long long amount) {cashAmount -= amount;}
-    void startAdminSession();
+    void startKoreanAdminSession();
+    void startEnglishAdminSession();
     virtual void startSession() = 0;
     virtual string getClassName() = 0;
     virtual ~ATM() = default;
@@ -651,7 +652,7 @@ public:
 
 /*---------------- Method of ATM Class ----------------*/
 
-void ATM::startAdminSession() {
+void ATM::startEnglishAdminSession() {
     cout << "\n--------------------------------------------------\n" << endl;
     cout << "You select the Admin Menu.\n" << endl;
     cout << "Please enter the Admin Card Number." << endl;
@@ -672,6 +673,18 @@ void ATM::startAdminSession() {
                 if (transactionHistoryOfATM.size() == 0) {
                     cout << "\nIt does not exist any transaction history in the ATM.\n" << endl;
                 } else {
+                    ofstream fout;
+                    fout.open("Transaction History of ATM.txt");
+                    if (!fout) cout << "File Error" << endl;
+                    else {
+                        fout << "Admin Serial No. : " << this->getSerialNum() << endl;
+                        for (int i = 0; i < transactionHistoryOfATM.size(); i++) {
+                            for (int j = 0; j < transactionHistoryOfATM[i].size(); j++) {
+                                fout << transactionHistoryOfATM[i][j].getInformation();
+                                fout << "\n";
+                            }
+                        }
+                    }
                     for (int i = 0; i < transactionHistoryOfATM.size(); i++) {
                         for (int j = 0; j < transactionHistoryOfATM[i].size(); j++) {
                             cout << transactionHistoryOfATM[i][j].getInformation() << endl;
@@ -687,6 +700,57 @@ void ATM::startAdminSession() {
         }
     } else {
         cout << "\nIt's an invalid admin card number. Please Re-try.\n" << endl;
+    }
+}
+
+void ATM::startKoreanAdminSession() {
+    cout << "\n--------------------------------------------------\n" << endl;
+    cout << "관리자 모드에 접근하셨습니다.\n" << endl;
+    cout << "관리자 카드 번호를 입력해주세요." << endl;
+    cout << "=> : ";
+    string inAdmin;
+    cin >> inAdmin;
+    if (inAdmin.compare(AdminNum) == 0) {
+        while (true) {
+            cout << "\n--------------------------------------------------\n" << endl;
+            cout << "관리자 모드에 오신 것을 환영합니다.e\n" << endl;
+            cout << "서비스 목록" << endl;
+            cout << "1. ATM 기기에 저장된 전체 거래 기록 출력" << endl;
+            cout << "2. 관리자 모드 종료" << endl;
+            cout << "\n번호를 입력해주세요 : ";
+            int num;
+            cin >> num;
+            if (num == 1) {
+                if (transactionHistoryOfATM.size() == 0) {
+                    cout << "\n현재 해당 ATM 기기에는 저장된 거래 기록이 존재하지 않습니다..\n" << endl;
+                } else {
+                    ofstream fout;
+                    fout.open("Transaction History of ATM.txt");
+                    if (!fout) cout << "출력 파일 오류" << endl;
+                    else {
+                        fout << "Admin Serial No. : " << this->getSerialNum() << endl;
+                        for (int i = 0; i < transactionHistoryOfATM.size(); i++) {
+                            for (int j = 0; j < transactionHistoryOfATM[i].size(); j++) {
+                                fout << transactionHistoryOfATM[i][j].getInformation();
+                                fout << "\n";
+                            }
+                        }
+                    }
+                    for (int i = 0; i < transactionHistoryOfATM.size(); i++) {
+                        for (int j = 0; j < transactionHistoryOfATM[i].size(); j++) {
+                            cout << transactionHistoryOfATM[i][j].getInformation() << endl;
+                        }
+                    }
+                }
+            } else if (num == 2) {
+                cout << "\n관리자 모드 종료\n" << endl;
+                break;
+            } else {
+                cout << "\n유효하지 않은 번호입니다. 다시 한 번 시도해주시길 바랍니다.\n" << endl;
+            }
+        }
+    } else {
+        cout << "\n유효하지 않은 번호입니다. 다시 한 번 시도해주시길 바랍니다.\n" << endl;
     }
 }
 
@@ -734,8 +798,26 @@ public:
     }
     string getClassName() {return "Unilingual";}
     void startSession() {
-        EnglishSession newSession(this);
-        session = newSession;
+        while (true) {
+            cout << "Menu\n" << endl;
+            cout << "1. Transaction" << endl;
+            cout << "2. Admin" << endl;
+            cout << "3. Go to HOME\n" << endl;
+            cout << "Please Enter the Number of Language : ";
+            int languageNum;
+            cin >> languageNum;
+            if (languageNum == 1) {
+                cout << "\n--------------------------------------------------\n" << endl;
+                EnglishSession newSession(this);
+                session = newSession;
+            } else if (languageNum == 2) {
+                startEnglishAdminSession();
+            } else if (languageNum == 3) {
+                break;
+            } else {
+                cout << "It's an invalid number." << endl;
+            }
+        }
     }
 };
 
@@ -752,9 +834,19 @@ public:
     }
     string getClassName() {return "Bilingual";}
     void startSession() {
+        int sign = startEnglishSession();
+        cout << "Sign : " << sign << endl;
+        if (sign != 0) {
+            do {
+                if (sign == 1) sign = startKoreanSession();
+                else sign = startEnglishSession();
+            } while (sign != 0);
+        }
+    }
+    int startEnglishSession() {
         while (true) {
             cout << "Menu\n" << endl;
-            cout << "1. English" << endl;
+            cout << "1. Transaction" << endl;
             cout << "2. Korean" << endl;
             cout << "3. Admin" << endl;
             cout << "4. Go to HOME\n" << endl;
@@ -767,12 +859,37 @@ public:
                 session = newSession;
             } else if (languageNum == 2) {
                 cout << "\n--------------------------------------------------\n" << endl;
+                return 1;
+            } else if (languageNum == 3) {
+                startEnglishAdminSession();
+            } else if (languageNum == 4) {
+                return 0;
+            } else {
+                cout << "It's an invalid number." << endl;
+            }
+        }
+    }
+    int startKoreanSession() {
+        while (true) {
+            cout << "메뉴\n" << endl;
+            cout << "1. 서비스 이용" << endl;
+            cout << "2. 영어 (English)" << endl;
+            cout << "3. 관리자 접근" << endl;
+            cout << "4. ATM 서비스 종료\n" << endl;
+            cout << "희망하시는 번호를 입려해주세요 : ";
+            int languageNum;
+            cin >> languageNum;
+            if (languageNum == 1) {
+                cout << "\n--------------------------------------------------\n" << endl;
                 KoreanSession newSession(this);
                 session = newSession;
+            } else if (languageNum == 2) {
+                cout << "\n--------------------------------------------------\n" << endl;
+                return 2;
             } else if (languageNum == 3) {
-                startAdminSession();
+                startKoreanAdminSession();
             } else if (languageNum == 4) {
-                break;
+                return 0;
             } else {
                 cout << "It's an invalid number." << endl;
             }
