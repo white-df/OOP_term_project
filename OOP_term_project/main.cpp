@@ -73,12 +73,14 @@ protected:
     static unsigned long long transactionCnt;
     unsigned long long ID = transactionCnt;
     unsigned long long Amount = 0;
-    string description = "#";
+    string englishDescription = "#";
+    string koreanDescription = "#";
     Account* account;
 public:
     unsigned long long getID() { return ID; }
     unsigned long long getAmount() { return Amount; }
-    string getInformation() {return description;}
+    string getEnglishInformation() {return englishDescription;}
+    string getKoreanInformation() {return koreanDescription;}
 };
 
 unsigned long long Transaction::transactionCnt{ 1 };
@@ -96,12 +98,19 @@ DepositTransaction::DepositTransaction(Account* acc, unsigned long long amount) 
     account = acc;
     Amount = amount;
     ID = transactionCnt++;
-    description.append(to_string(ID));
-    description.append(". Account number '");
-    description.append(account->getAccountNumber());
-    description.append("' deposited ");
-    description.append(to_string(amount));
-    description.append(" won");
+    englishDescription.append(to_string(ID));
+    englishDescription.append(". Account number '");
+    englishDescription.append(account->getAccountNumber());
+    englishDescription.append("' deposited ");
+    englishDescription.append(to_string(amount));
+    englishDescription.append(" won");
+    
+    koreanDescription.append(to_string(ID));
+    koreanDescription.append(". 계좌번호 '");
+    koreanDescription.append(account->getAccountNumber());
+    koreanDescription.append("'에 ");
+    koreanDescription.append(to_string(amount));
+    koreanDescription.append(" 원이 입금되었습니다");
 }
 
 //string DepositTransaction::getInformation() {
@@ -120,12 +129,19 @@ WithdrawalTransaction::WithdrawalTransaction(Account* acc, unsigned long long am
     account = acc;
     Amount = amount;
     ID = transactionCnt++;
-    description.append(to_string(ID));
-    description.append(". Account number '");
-    description.append(account->getAccountNumber());
-    description.append("' withdrew ");
-    description.append(to_string(amount));
-    description.append(" won");
+    englishDescription.append(to_string(ID));
+    englishDescription.append(". Account number '");
+    englishDescription.append(account->getAccountNumber());
+    englishDescription.append("' withdrew ");
+    englishDescription.append(to_string(amount));
+    englishDescription.append(" won");
+    
+    koreanDescription.append(to_string(ID));
+    koreanDescription.append(". 계좌번호 '");
+    koreanDescription.append(account->getAccountNumber());
+    koreanDescription.append("'에서 ");
+    koreanDescription.append(to_string(amount));
+    koreanDescription.append(" 원이 출금되었습니다");
 }
 
 
@@ -149,13 +165,21 @@ AccountTransferTransaction::AccountTransferTransaction(Account* destacc, Account
     account = acc;
     Amount = amount;
     ID = transactionCnt++;
-    description.append(to_string(ID));
-    description.append(". Account number '");
-    description.append(account->getAccountNumber());
-    description.append("' transfer to ");
-    description.append(destaccount->getAccountNumber()).append(" ");
-    description.append(to_string(amount));
-    description.append(" won");
+    englishDescription.append(to_string(ID));
+    englishDescription.append(". Account number '");
+    englishDescription.append(account->getAccountNumber());
+    englishDescription.append("' transfer to account number '");
+    englishDescription.append(destaccount->getAccountNumber()).append("' ");
+    englishDescription.append(to_string(amount));
+    englishDescription.append(" won");
+    
+    koreanDescription.append(to_string(ID));
+    koreanDescription.append(". 계좌번호 '");
+    koreanDescription.append(account->getAccountNumber());
+    koreanDescription.append("' 에서 계좌번호 '");
+    koreanDescription.append(destaccount->getAccountNumber()).append("' 로 ");
+    koreanDescription.append(to_string(amount));
+    koreanDescription.append(" 원을 송금하였습니다");
 }
 
 
@@ -172,13 +196,21 @@ CashTransferTransaction::CashTransferTransaction(Account* destacc, Account* acc,
     destaccount = destacc;
     Amount = amount;
     ID = transactionCnt++;
-    description.append(to_string(ID));
-    description.append(". Account number '");
-    description.append(account->getAccountNumber());
-    description.append("' transfer to ");
-    description.append(destaccount->getAccountNumber()).append(" ");
-    description.append(to_string(amount));
-    description.append(" won");
+    englishDescription.append(to_string(ID));
+    englishDescription.append(". Account number '");
+    englishDescription.append(account->getAccountNumber());
+    englishDescription.append("' transfer to account number '");
+    englishDescription.append(destaccount->getAccountNumber()).append("' ");
+    englishDescription.append(to_string(amount));
+    englishDescription.append(" won");
+    
+    koreanDescription.append(to_string(ID));
+    koreanDescription.append(". 계좌번호 '");
+    koreanDescription.append(account->getAccountNumber());
+    koreanDescription.append("' 에서 계좌번호 '");
+    koreanDescription.append(destaccount->getAccountNumber()).append("' 로 ");
+    koreanDescription.append(to_string(amount));
+    koreanDescription.append(" 원을 송금하였습니다");
 }
 
 //string CashTransferTransaction::getInformation() {
@@ -300,7 +332,7 @@ public:
         cout << "                     <";
         if (this->getSingleInfo() == 0) cout << "SINGLE>" << endl;
         else cout << "MULTI>" << endl;
-        cout << "-------------------------------------------------\n" << endl;
+        cout << "--------------------------------------------------\n" << endl;
     }
     void mainKoreanDisplay() {
         cout << "\n==================================================" << endl;
@@ -308,7 +340,7 @@ public:
         cout << "                  <";
         if (this->getSingleInfo() == 0) cout << "주거래 은행 전용>" << endl;
         else cout << "타은행 거래 가능>" << endl;
-        cout << "-------------------------------------------------\n" << endl;
+        cout << "--------------------------------------------------\n" << endl;
     }
     void invalidEnglishDisplay() {
         cout << "\n ----------------------------------------------- " << endl;
@@ -345,9 +377,10 @@ void Session::CashDeposit(unsigned long long amount, int x) {
     DepositTransaction newTransaction(account, amount);
     account->addTransaction(&newTransaction);
     transactionHistoryOfSession.push_back(newTransaction);
-    cout << newTransaction.getInformation() << endl;
-    if (x == 0) cout << "현재 잔액 : ";
-    else cout << "Current Available Funds : ";
+    if (x == 0) cout << newTransaction.getKoreanInformation() << endl;
+    else cout << newTransaction.getEnglishInformation() << endl;
+    if (x == 0) cout << "\n현재 잔액 : ";
+    else cout << "\nCurrent Available Funds : ";
     cout << account->getFundInfo();
     if (x == 0) cout << " 원" << endl;
     else cout << " won" << endl;
@@ -361,8 +394,10 @@ void Session::CheckDeposit(unsigned long long amount, int x) {
     DepositTransaction newTransaction(account, amount);
     account->addTransaction(&newTransaction);
     transactionHistoryOfSession.push_back(newTransaction);
-    if (x == 0) cout << "현재 잔액 : ";
-    else cout << "Current Available Funds : ";
+    if (x == 0) cout << newTransaction.getKoreanInformation() << endl;
+    else cout << newTransaction.getEnglishInformation() << endl;
+    if (x == 0) cout << "\n현재 잔액 : ";
+    else cout << "\nCURRENT BALANCE : ";
     cout << account->getFundInfo();
     if (x == 0) cout << " 원" << endl;
     else cout << " won" << endl;
@@ -382,14 +417,16 @@ void Session::Withdrawal(unsigned long long amount, int x) {
         else cout << "           YOU DON'T HAVE ENOUGH MONEY\n" << endl;
     }
     else {
+        atm->minusMoney(amount);
         account->minusMoney(amount + fee);
         WithdrawalTransaction newTransaction(account, amount);
         account->addTransaction(&newTransaction);
         transactionHistoryOfSession.push_back(newTransaction);
-        cout << newTransaction.getInformation() << endl;
+        if (x == 0) cout << newTransaction.getKoreanInformation() << endl;
+        else cout << newTransaction.getEnglishInformation() << endl;
         withdrawalCount ++;
-        if (x == 0) cout << "현재 잔액 : ";
-        else cout << "Current Available Funds : ";
+        if (x == 0) cout << "\n현재 잔액 : ";
+        else cout << "\nCURRENT BALANCE : ";
         cout << account->getFundInfo();
         if (x == 0) cout << " 원" << endl;
         else cout << " won" << endl;
@@ -403,14 +440,20 @@ void Session::CashTransfer(unsigned long long amount, Account* destination, int 
     CashTransferTransaction newTransaction(destination, account, amount);
     destination->addTransaction(&newTransaction);
     transactionHistoryOfSession.push_back(newTransaction);
-    cout << newTransaction.getInformation() << endl;
+    if (x == 0) cout << newTransaction.getKoreanInformation() << endl;
+    else cout << newTransaction.getEnglishInformation() << endl;
+    if (x == 0) cout << "\n현재 잔액 : ";
+    else cout << "\nCURRENT BALANCE : ";
+    cout << account->getFundInfo();
+    if (x == 0) cout << " 원" << endl;
+    else cout << " won" << endl;
     cout << "\n";
 }
 
 void Session::AccountTransfer(unsigned long long amount, Account* destination, int x) {
     unsigned long long fee;
-    string accountNum = findBank(account->getAccountNumber())->getBankName();
-    string destNum = findBank(destination->getAccountNumber())->getBankName();
+    string accountNum = (findAccount(account->getAccountNumber()))->getBankName();
+    string destNum = (findAccount(destination->getAccountNumber()))->getBankName();
     if ( (accountNum.compare(destNum) == 0) && (primarySignal == true) ) fee = 1500;
     else if ( (accountNum.compare(destNum) == 0) && (primarySignal == false) ) fee = 2500;
     else fee = 2000;
@@ -424,9 +467,10 @@ void Session::AccountTransfer(unsigned long long amount, Account* destination, i
         destination->addTransaction(&newTransaction);
         account->addTransaction(&newTransaction);
         transactionHistoryOfSession.push_back(newTransaction);
-        cout << newTransaction.getInformation() << endl;
-        if (x == 0) cout << "현재 잔액 : ";
-        else cout << "Current Available Funds : ";
+        if (x == 0) cout << newTransaction.getKoreanInformation() << endl;
+        else cout << newTransaction.getEnglishInformation() << endl;
+        if (x == 0) cout << "\n현재 잔액 : ";
+        else cout << "\nCURRENT BALANCE : ";
         cout << account->getFundInfo();
         if (x == 0) cout << " 원" << endl;
         else cout << " won" << endl;
@@ -467,7 +511,8 @@ public:
                 account = temp->findAccountOfBank(inputAccount);
             } else {
                 if (atm->getSingleInfo() == 0) {
-                    cout << "            타은행 거래는 사용하실 수 없습니다" << endl;
+                    atm->mainKoreanDisplay();
+                    cout << "            타은행 계좌는 사용하실 수 없습니다\n" << endl;
                     cout << "==================================================" << endl;
                     validAccount = false;
                 } else {
@@ -540,7 +585,9 @@ public:
                                     cout << "==================================================" << endl;
                                 }
                             }
+                            atm->mainKoreanDisplay();
                             CashDeposit(inAmount, 0);
+                            cout << "==================================================" << endl;
                         } else if (x == 2) {
                             while (true) {
                                 cout << "       입금하실 10만원권 수표의 장 수를 입력해주세요\n" << endl;
@@ -690,15 +737,19 @@ public:
                     } else if (transactionNum == 4) { // Transaction History
                         atm->mainKoreanDisplay();
                         cout << "             거래 내역 조회를 선택하셨습니다\n" << endl;
-                        cout << "            해당 계좌의 거래내역은 다음과 같습니다\n" << endl;
+                        cout << "          해당 계좌의 거래내역은 다음과 같습니다\n" << endl;
                         vector<Transaction> temp = account->getTransactionHistoryOfAccount();
                         if (temp.size() == 0) {
-                            cout << "==================================================\n" << endl;
+                            cout << "--------------------------------------------------\n" << endl;
+                            cout << "            현재 잔액 : " << account->getFundInfo() << " 원\n" << endl;
                             cout << "            해당 계좌에는 거래 내역이 업습니다\n" << endl;
+                            cout << "==================================================" << endl;
                         } else {
                             for (int i = 0; i < temp.size(); i++) {
-                                cout << temp[i].getInformation() << endl;
+                                cout << temp[i].getKoreanInformation() << endl;
                             }
+                            cout << "\n현재 잔액 : " << account->getFundInfo() << " 원\n" << endl;
+                            cout << "==================================================" << endl;
                         }
                         
                     } else if (transactionNum == 5) { // Session Exit
@@ -721,7 +772,7 @@ public:
                     cout << "==================================================" << endl;
                     atm->addTransaction(transactionHistoryOfSession);
                     for (int i = 0; i < transactionHistoryOfSession.size(); i++) {
-                        cout << transactionHistoryOfSession[i].getInformation() << endl;
+                        cout << transactionHistoryOfSession[i].getKoreanInformation() << endl;
                     }
                 }
             }
@@ -997,11 +1048,14 @@ public:
                         vector<Transaction> temp =account->getTransactionHistoryOfAccount();
                         if (temp.size() == 0) {
                             cout << "==================================================\n" << endl;
+                            cout << "CURRENT BALANCE : " << account->getFundInfo() << " won\n" << endl;
                             cout << "THIS ACCOUNT DOESN'T HAVE ANY TRANSACTION HISTORY\n" << endl;
                         } else {
                             for (int i = 0; i < temp.size(); i++) {
-                                cout << temp[i].getInformation() << endl;
+                                cout << temp[i].getEnglishInformation() << endl;
                             }
+                            cout << "\nCURRENT BALANCE : " << account->getFundInfo() << " won\n" << endl;
+                            cout << "==================================================" << endl;
                         }
                         
                     } else if (transactionNum == 5) { // Session Exit
@@ -1024,7 +1078,7 @@ public:
                     cout << "==================================================" << endl;
                     atm->addTransaction(transactionHistoryOfSession);
                     for (int i = 0; i < transactionHistoryOfSession.size(); i++) {
-                        cout << transactionHistoryOfSession[i].getInformation() << endl;
+                        cout << transactionHistoryOfSession[i].getEnglishInformation() << endl;
                     }
                 }
             }
@@ -1065,10 +1119,10 @@ void ATM::startEnglishAdminSession() {
                     fout.open("Transaction History of ATM.txt");
                     if (!fout) cout << "                   File Error" << endl;
                     else {
-                        fout << "ATM 고유식별 번호 (Serial No.) : " << this->getSerialNum() << endl;
+                        fout << "ATM Serial No. : " << this->getSerialNum() << endl;
                         for (int i = 0; i < transactionHistoryOfATM.size(); i++) {
                             for (int j = 0; j < transactionHistoryOfATM[i].size(); j++) {
-                                fout << transactionHistoryOfATM[i][j].getInformation();
+                                fout << transactionHistoryOfATM[i][j].getEnglishInformation();
                                 fout << "\n";
                             }
                         }
@@ -1078,7 +1132,7 @@ void ATM::startEnglishAdminSession() {
                     cout << "==================================================" << endl;
                     for (int i = 0; i < transactionHistoryOfATM.size(); i++) {
                         for (int j = 0; j < transactionHistoryOfATM[i].size(); j++) {
-                            cout << transactionHistoryOfATM[i][j].getInformation() << endl;
+                            cout << transactionHistoryOfATM[i][j].getEnglishInformation() << endl;
                         }
                     }
                 }
@@ -1118,10 +1172,10 @@ void ATM::startKoreanAdminSession() {
                     fout.open("Transaction History of ATM.txt");
                     if (!fout) cout << "                   출력 파일 오류" << endl;
                     else {
-                        fout << "ATM 고유식별 번호 (Serial No.) : " << this->getSerialNum() << endl;
+                        fout << "ATM 고유식별 번호 : " << this->getSerialNum() << endl;
                         for (int i = 0; i < transactionHistoryOfATM.size(); i++) {
                             for (int j = 0; j < transactionHistoryOfATM[i].size(); j++) {
-                                fout << transactionHistoryOfATM[i][j].getInformation();
+                                fout << transactionHistoryOfATM[i][j].getKoreanInformation();
                                 fout << "\n";
                             }
                         }
@@ -1131,7 +1185,7 @@ void ATM::startKoreanAdminSession() {
                     cout << "==================================================" << endl;
                     for (int i = 0; i < transactionHistoryOfATM.size(); i++) {
                         for (int j = 0; j < transactionHistoryOfATM[i].size(); j++) {
-                            cout << transactionHistoryOfATM[i][j].getInformation() << endl;
+                            cout << transactionHistoryOfATM[i][j].getKoreanInformation() << endl;
                         }
                     }
                 }
@@ -1151,10 +1205,10 @@ void ATM::startKoreanAdminSession() {
 
 class SingleBankATM : public ATM {
 public:
-    SingleBankATM(string priName) {
+    SingleBankATM(string priName, string amount) {
         serialNum = atmCnt++;
         primaryBank = findBank(priName);
-        cashAmount = 100000000000000;
+        cashAmount = stoull(amount);
         SingleOrMulti = 0;
     }
     void startSession() {}
@@ -1165,10 +1219,10 @@ public:
 
 class MultiBankATM : public ATM {
 public:
-    MultiBankATM(string priName) {
+    MultiBankATM(string priName, string amount) {
         serialNum = atmCnt++;
         primaryBank = findBank(priName);
-        cashAmount = 100000000000000;
+        cashAmount = stoull(amount);
         SingleOrMulti = 1;
     }
     void startSession() {}
@@ -1311,17 +1365,17 @@ void readAtmData(ifstream& fin) {
             vector<string> splitted = split(str, ' ');
             ATM* newAtm;
             if (splitted[1].compare("Single") == 0) {
-                newAtm = new SingleBankATM(splitted[0]);
+                newAtm = new SingleBankATM(splitted[0], splitted[3]);
             } else if (splitted[1].compare("Multi") == 0) {
-                newAtm = new MultiBankATM(splitted[0]);
+                newAtm = new MultiBankATM(splitted[0], splitted[3]);
             } else {
                 cout << "입력 파일 오류" << endl;
                 exit(7);
             }
             if (splitted[2].compare("Bi") == 0) {
-                newAtm = new BilingualATM(newAtm, splitted[3]);
+                newAtm = new BilingualATM(newAtm, splitted[4]);
             } else if (splitted[2].compare("Uni") == 0) {
-                newAtm = new UnilingualATM(newAtm, splitted[3]);
+                newAtm = new UnilingualATM(newAtm, splitted[4]);
             } else {
                 cout << "입력 파일 오류" << endl;
                 exit(8);
@@ -1450,19 +1504,16 @@ int main(int argc, char* argv[]) {
     
     while (programEndSignal) {
         cout << "Select the ATM" << endl;
+        cout << "이용하실 ATM을 선택해주십시오\n" << endl;
         for (int i = 0; i < atmData.size(); i++) {
-            if (i % 2 == 0) {
-                cout << "\n";
-            }
-            cout << right << setfill('0') << setw(2) << i+1 << ". " << right << setfill(' ') << setw(8) << atmData[i]->getPrimaryBankInfo() << " ";
+            cout << right << setfill('0') << setw(2) << i+1 << ". " << left << setfill(' ') << setw(8) << atmData[i]->getPrimaryBankInfo() << "  ";
             if (atmData[i]->getSingleInfo() == 0) {
                 cout << "Single  ";
             } else cout << "Multi   ";
-            cout << left << setw(10) << atmData[i]->getClassName() << " ATM      ";
+            cout << left << setw(10) << atmData[i]->getClassName() << " ATM" <<endl;
         }
-        cout << "\n";
-        cout << atmData.size()+1 << ".  Program Exit\n" << endl;
-        cout << "Please Enter the Number of ATM : ";
+        cout << atmData.size()+1 << ". Program   Exit    프로그램 종료\n" << endl;
+        cout << "Enter the Number (번호 입력) : ";
         int choiceAtm;
         cin >> choiceAtm;
         if (choiceAtm == atmData.size()+1) {
