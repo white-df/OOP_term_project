@@ -68,7 +68,6 @@ public:
 /*--------------거래내역 남기는 법: Session에서 거래 시작 시 Transaction* transaction 선언 후 거래 종료 시,--------------*/
 /*---transaction = new {deposit, withdraw, transfer 중 1}Transaction(transaction, (dest account), account, amount)---*/
 
-//class Transaction : public Account {
 class Transaction {
 protected:
     static unsigned long long transactionCnt;
@@ -84,7 +83,7 @@ public:
     string getKoreanInformation() {return koreanDescription;}
 };
 
-unsigned long long Transaction::transactionCnt{ 1 };
+unsigned long long Transaction::transactionCnt;
 
 
 /*------------ Children Classes of Transaction Class ------------*/
@@ -93,40 +92,28 @@ unsigned long long Transaction::transactionCnt{ 1 };
 class DepositTransaction : public Transaction {
 public:
     DepositTransaction(Account* acc, unsigned long long amount, string accountBank);
-//    string getInformation();
 };
 DepositTransaction::DepositTransaction(Account* acc, unsigned long long amount, string accountBank) {
     account = acc;
     Amount = amount;
-    ID = transactionCnt++;
+    ID = ++transactionCnt;
     englishDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "'\n    deposited " + to_string(amount) + " won");
     koreanDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "'에\n    " + to_string(amount) + " 원이 입금되었습니다");
 }
-
-//string DepositTransaction::getInformation() {
-//    return description;
-//} /* ex. 1 1234 5678 deposited 100$ */
-//  /* ex. 2 1234 5678 withdrew 50$ */
 
 /*------- Withdrawal Transaction Class ------*/
 class WithdrawalTransaction : public Transaction {
 public:
     WithdrawalTransaction(Account* acc, unsigned long long amount, string accountBank);
-//    string getInformation();
 };
 
 WithdrawalTransaction::WithdrawalTransaction(Account* acc, unsigned long long amount, string accountBank) {
     account = acc;
     Amount = amount;
-    ID = transactionCnt++;
+    ID = ++transactionCnt;
     englishDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "'\n    withdrew " + to_string(amount) + " won");
     koreanDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "'에서\n    " + to_string(amount) + " 원이 출금되었습니다");
 }
-
-
-//string WithdrawalTransaction::getInformation() {
-//    return description;
-//}
 
 /*-------- Transfer Transaction Class -------*/
 class TransferTransaction : public Transaction {
@@ -137,38 +124,27 @@ protected:
 class AccountTransferTransaction : public TransferTransaction {
 public:
     AccountTransferTransaction(Account* destacc, Account* account, unsigned long long amount, string accountBank, string destBank);
-//    string getInformation();
 };
 AccountTransferTransaction::AccountTransferTransaction(Account* destacc, Account* acc, unsigned long long amount, string accountBank, string destBank) {
     destaccount = destacc;
     account = acc;
     Amount = amount;
-    ID = transactionCnt++;
+    ID = ++transactionCnt;
     englishDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "' transfer to\n    " + destBank + " " + destaccount->getInfo() + " '" + account->getAccountNumber() + "' " + to_string(amount) + " won\n    (Account -> Account)");
     koreanDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "'에서\n    " + destBank + " " + destaccount->getInfo() + " '" + account->getAccountNumber() + "'로\n    " + to_string(amount) + " 원을 계좌 송금하였습니다");
 }
 
-
-//string AccountTransferTransaction::getInformation() {
-//    return description;
-//}
-
 class CashTransferTransaction : public TransferTransaction {
 public:
     CashTransferTransaction(Account* destaccount, Account* account, unsigned long long amount, string accountBank, string destBank);
-//    string getInformation();
 };
 CashTransferTransaction::CashTransferTransaction(Account* destacc, Account* acc, unsigned long long amount, string accountBank, string destBank) {
     destaccount = destacc;
     Amount = amount;
-    ID = transactionCnt++;
+    ID = ++transactionCnt;
     englishDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "' transfer to\n    " + destBank + " " + destaccount->getInfo() + " '" + account->getAccountNumber() + "' " + to_string(amount) + " won\n    (Cash -> Account))");
     koreanDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "'에서\n    " + destBank + " " + destaccount->getInfo() + " '" + account->getAccountNumber() + "'로\n    " + to_string(amount) + " 원을 현금 송금하였습니다");
 }
-
-//string CashTransferTransaction::getInformation() {
-//    return description;
-//}
 
 
 
@@ -263,7 +239,7 @@ protected:
     int serialNum; // ATM 시리얼 넘버
     Bank* primaryBank; // 주거래 은행
     unsigned long long cashAmount;  // ATM에 들어있는 현금
-    vector<vector<Transaction>> transactionHistoryOfATM; // ATM 전체 transaction history (Admin에서 접근 가능)
+    vector< vector<Transaction> > transactionHistoryOfATM; // ATM 전체 transaction history (Admin에서 접근 가능)
     string AdminNum; // Admin 넘버
     Session session; // 세션
     int SingleOrMulti; // 0: Single , 1: Multi
@@ -312,7 +288,7 @@ public:
     virtual ~ATM() = default;
 };
 
-int ATM::atmCnt{ 1 };
+int ATM::atmCnt;
 
 vector<ATM*> atmData;
 
@@ -1335,7 +1311,7 @@ void ATM::startKoreanAdminSession() {
 class SingleBankATM : public ATM {
 public:
     SingleBankATM(string priName, string amount) {
-        serialNum = atmCnt++;
+        serialNum = ++atmCnt;
         primaryBank = findBank(priName);
         cashAmount = stoull(amount);
         SingleOrMulti = 0;
@@ -1349,7 +1325,7 @@ public:
 class MultiBankATM : public ATM {
 public:
     MultiBankATM(string priName, string amount) {
-        serialNum = atmCnt++;
+        serialNum = ++atmCnt;
         primaryBank = findBank(priName);
         cashAmount = stoull(amount);
         SingleOrMulti = 1;
@@ -1502,7 +1478,7 @@ vector<string> split(string input, char delimeter) {
 
 void readAtmData(ifstream& fin) {
     if (!fin) {
-        cout << "해당 파일이 존재하지 않습니다." << endl;
+        cout << "해당 파일이 존재하지 않습니다.\n" << endl;
         exit(6);
     } else {
         while (!fin.eof()) {
@@ -1516,31 +1492,36 @@ void readAtmData(ifstream& fin) {
             string str;
             getline(fin, str);
             vector<string> splitted = split(str, ' ');
-            ATM* newAtm;
-            if (splitted[1].compare("Single") == 0) {
-                newAtm = new SingleBankATM(splitted[0], splitted[3]);
-            } else if (splitted[1].compare("Multi") == 0) {
-                newAtm = new MultiBankATM(splitted[0], splitted[3]);
+            if (splitted.size() != 5) {
+                cout << "ATM.txt 내 데이터 개수가 부족합니다.\n" << endl;
+                exit(11);
             } else {
-                cout << "입력 파일 오류" << endl;
-                exit(7);
+                ATM* newAtm;
+                if (splitted[1].compare("Single") == 0) {
+                    newAtm = new SingleBankATM(splitted[0], splitted[3]);
+                } else if (splitted[1].compare("Multi") == 0) {
+                    newAtm = new MultiBankATM(splitted[0], splitted[3]);
+                } else {
+                    cout << "입력 파일 오류\n" << endl;
+                    exit(7);
+                }
+                if (splitted[2].compare("Bi") == 0) {
+                    newAtm = new BilingualATM(newAtm, splitted[4]);
+                } else if (splitted[2].compare("Uni") == 0) {
+                    newAtm = new UnilingualATM(newAtm, splitted[4]);
+                } else {
+                    cout << "입력 파일 오류\n" << endl;
+                    exit(8);
+                }
+                atmData.push_back(newAtm);
             }
-            if (splitted[2].compare("Bi") == 0) {
-                newAtm = new BilingualATM(newAtm, splitted[4]);
-            } else if (splitted[2].compare("Uni") == 0) {
-                newAtm = new UnilingualATM(newAtm, splitted[4]);
-            } else {
-                cout << "입력 파일 오류" << endl;
-                exit(8);
-            }
-            atmData.push_back(newAtm);
         }
     }
 }
 
 void readBankData(ifstream& fin) {
     if (!fin) {
-        cout << "해당 파일이 존재하지 않습니다." << endl;
+        cout << "해당 파일이 존재하지 않습니다.\n" << endl;
         exit(9);
     } else {
         while (!fin.eof()) {
@@ -1555,7 +1536,7 @@ void readBankData(ifstream& fin) {
 
 void readAccountData(ifstream& fin) {
     if (!fin) {
-        cout << "해당 파일이 존재하지 않습니다." << endl;
+        cout << "해당 파일이 존재하지 않습니다.\n" << endl;
         exit(10);
     } else {
         while (!fin.eof()) {
@@ -1569,8 +1550,13 @@ void readAccountData(ifstream& fin) {
             string str;
             getline(fin, str);
             vector<string> splitted = split(str, ' ');
-            Account newAccount(splitted[1], splitted[2], splitted[3], splitted[4]);
-            findBank(splitted[0])->addAccount(newAccount);
+            if (splitted.size() != 5) {
+                cout << "ATM.txt 내 데이터 개수가 부족합니다.\n" << endl;
+                exit(12);
+            } else {
+                Account newAccount(splitted[1], splitted[2], splitted[3], splitted[4]);
+                findBank(splitted[0])->addAccount(newAccount);
+            }
         }
     }
 }
@@ -1593,73 +1579,30 @@ int main(int argc, char* argv[]) {
      -> 따라서 argc는 4
     */
     
-    
-    /*
-     자신의 환경에 따라 두 가지 조건 중 자신이 해당되는 것을 골라 그렇지 않은 케이스의 코드 주석 처리하여 사용하시오.
-     1. Xcode(Mac OS) 이거나 VScode(Window OS) 에서 코드를 실행할 경우 --->>> Case 1 사용
-     2. Terminal 에서 코드를 직접 컴파일하여 사용할 경우 --->>> Case 2 사용
-     */
-    
-    /*------------------------------------------------------- Case 1 Start -------------------------------------------------------*/
     // 해당 파일이 동일한 디렉토리에 있어야 됨.
         /*
          Xcode의 경우, "Product" -> "Scheme" -> "Edit Scheme" -> "Run" -> "Options"
          -> "Working Directory"에서 "Use custom working directory" 체크
         */
-    ifstream f2("Bank.txt");
-    readBankData(f2);
-    ifstream f1("ATM.txt");
-    readAtmData(f1);
-    ifstream f3("Account.txt");
-    readAccountData(f3);
-    /*-------------------------------------------------------- Case 1 End --------------------------------------------------------*/
-    
-    
-    /*------------------------------------------------------- Case 2 Start -------------------------------------------------------*/
-//    // 해당 파일이 동일한 디렉토리에 있어야 됨.
-//    int atmArgCount = 0;
-//    int bankArgCount = 0;
-//    int accountArgCount = 0;
-//
-//    if (argc != 4) { // Argument 수가 맞지 않을때
-//        cout << "Argument 부족" << endl;
-//        return 1;
-//    } else { // 정상 실행
-//        for (int i = 1; i < argc; i++) {
-//            if (strncmp(argv[i], "ATM.txt", 7) == 0) { // Argument 가 ATM.txt 일 경우
-//                if (atmArgCount != 0) { // ATM argument 가 이미 한 번 나왔는데 또 나왔을 경우, Error 발생
-//                    cout << "Too many ATM arguments..." << endl;
-//                    return 2;
-//                } else { // 정상 실행
-//                    ifstream fin(argv[i]); // 파일 read
-//                    readAtmData(fin);
-//                    atmArgCount ++;
-//                }
-//            } else if (strncmp(argv[i], "Bank.txt", 8) == 0) { // Argument 가 Bank.txt 일 경우
-//                if (bankArgCount != 0) { // Bank argument 가 이미 한 번 나왔는데 또 나왔을 경우, Error 발생
-//                    cout << "Too many Bank arguments..." << endl;
-//                    return 3;
-//                } else { // 정상 실행
-//                    ifstream fin(argv[i]); // 파일 read
-//                    readBankData(fin);
-//                    bankArgCount ++;
-//                }
-//            } else if (strncmp(argv[i], "Account.txt", 11) == 0) { // Argument 가 Account.txt 일 경우
-//                if (accountArgCount != 0) { // Account argument 가 이미 한 번 나왔는데 또 나왔을 경우, Error 발생
-//                    cout << "Too many Account arguments..." << endl;
-//                    return 4;
-//                } else { // 정상 실행
-//                    ifstream fin(argv[i]); // 파일 read
-//                    readAccountData(fin);
-//                    accountArgCount ++;
-//                }
-//            } else { // Exception
-//                cout << argv[i] << "의 파일명이 invalid 합니다..." << endl;
-//                return 5;
-//            }
-//        }
-//    }
-    /*-------------------------------------------------------- Case 2 End --------------------------------------------------------*/
+    if (argc == 1) {
+        ifstream f2("Bank.txt");
+        readBankData(f2);
+        ifstream f1("ATM.txt");
+        readAtmData(f1);
+        ifstream f3("Account.txt");
+        readAccountData(f3);
+    }
+    else if (argc != 4) { // Argument 수가 맞지 않을때
+        cout << "Argument 부족" << endl;
+        return 1;
+    } else { // 정상 실행
+        ifstream atmtxt(argv[1]); // 파일 read
+        readAtmData(atmtxt);
+        ifstream banktxt(argv[2]); // 파일 read
+        readBankData(banktxt);
+        ifstream acctxt(argv[3]); // 파일 read
+        readAccountData(acctxt);
+    }
     
     bool programEndSignal = true;
     
@@ -1667,7 +1610,7 @@ int main(int argc, char* argv[]) {
         cout << "Select the ATM" << endl;
         cout << "이용하실 ATM을 선택해주십시오\n" << endl;
         for (int i = 0; i < atmData.size(); i++) {
-            cout << right << setfill('0') << setw(2) << i+1 << ". " << left << setfill(' ') << setw(8) << atmData[i]->getPrimaryBankInfo()<< "  ";
+            cout << right << setfill('0') << setw(2) << i+1 << ". " << left << setfill(' ') << setw(8) << atmData[i]->getPrimaryBankInfo() << "  ";
             if (atmData[i]->getSingleInfo() == 0) {
                 cout << "Single  ";
             } else cout << "Multi   ";
@@ -1689,7 +1632,7 @@ int main(int argc, char* argv[]) {
         if (choiceAtm == atmData.size()+1) {
             programEndSignal = false;
         }
-        else if ((choiceAtm > 0) && (choiceAtm < atmData.size())) {
+        else if ((choiceAtm > 0) && (choiceAtm <= atmData.size())) {
             atmData[choiceAtm-1]->startSession();
         } else {
             cout << "\n==================================================" << endl;
