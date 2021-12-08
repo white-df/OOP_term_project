@@ -1030,7 +1030,7 @@ public:
                                     if (numBill <= 30) {
                                         int checking = -1;
                                         atm->mainEnglishDisplay();
-                                        cout << "              " << numBill * 10000 << " won IS RIGHT?\n" << endl;
+                                        cout << "              " << numBill * 100000 << " won IS RIGHT?\n" << endl;
                                         cout << "             1. CORRECT    2. Re-TRY\n" << endl;
                                         cout << "==================================================" << endl;
                                         cout << "Enter the number : ";
