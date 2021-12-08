@@ -130,8 +130,8 @@ AccountTransferTransaction::AccountTransferTransaction(Account* destacc, Account
     account = acc;
     Amount = amount;
     ID = ++transactionCnt;
-    englishDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "' transfer to\n    " + destBank + " " + destaccount->getInfo() + " '" + account->getAccountNumber() + "' " + to_string(amount) + " won\n    (Account -> Account)");
-    koreanDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "'에서\n    " + destBank + " " + destaccount->getInfo() + " '" + account->getAccountNumber() + "'로\n    " + to_string(amount) + " 원을 계좌 송금하였습니다");
+    englishDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "' transfer to\n    " + destBank + " " + destaccount->getInfo() + " '" + destaccount->getAccountNumber() + "' " + to_string(amount) + " won\n    (Account -> Account)");
+    koreanDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "'에서\n    " + destBank + " " + destaccount->getInfo() + " '" + destaccount->getAccountNumber() + "'로\n    " + to_string(amount) + " 원을 계좌 송금하였습니다");
 }
 
 class CashTransferTransaction : public TransferTransaction {
@@ -142,8 +142,8 @@ CashTransferTransaction::CashTransferTransaction(Account* destacc, Account* acc,
     destaccount = destacc;
     Amount = amount;
     ID = ++transactionCnt;
-    englishDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "' transfer to\n    " + destBank + " " + destaccount->getInfo() + " '" + account->getAccountNumber() + "' " + to_string(amount) + " won\n    (Cash -> Account))");
-    koreanDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "'에서\n    " + destBank + " " + destaccount->getInfo() + " '" + account->getAccountNumber() + "'로\n    " + to_string(amount) + " 원을 현금 송금하였습니다");
+    englishDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "' transfer to\n    " + destBank + " " + destaccount->getInfo() + " '" + destaccount->getAccountNumber() + "' " + to_string(amount) + " won\n    (Cash -> Account))");
+    koreanDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "'에서\n    " + destBank + " " + destaccount->getInfo() + " '" + destaccount->getAccountNumber() + "'로\n    " + to_string(amount) + " 원을 현금 송금하였습니다");
 }
 
 
@@ -525,8 +525,24 @@ public:
                                     cin.ignore(100, '\n');
                                     continue;
                                 }
-                                if ((0 < numBill) && (numBill <= 50)) {inAmount = 10000 * numBill; break;}
-                                else if (numBill > 50) {
+                                if ((0 < numBill) && (numBill <= 50)) {
+                                    int checking = -1;
+                                    atm->mainKoreanDisplay();
+                                    cout << "               " << numBill * 10000 << " 원이 맞습니까?\n" << endl;
+                                    cout << "          1. 맞음(계속 진행)    2. 다시 입력\n" << endl;
+                                    cout << "==================================================" << endl;
+                                    cout << "번호 입력 : ";
+                                    cin >> checking;
+                                    if (cin.fail() == true) {
+                                        atm->invalidKoreanDisplay();
+                                        cin.clear();
+                                        cin.ignore(100, '\n');
+                                        continue;
+                                    }
+                                    if (checking == 1) {inAmount = 10000 * numBill; break;}
+                                    else if (checking == 2) continue;
+                                    else atm->invalidKoreanDisplay();
+                                } else if (numBill > 50) {
                                     atm->mainKoreanDisplay();
                                     cout << "       거래 1회 당 입금 가능한 장 수를 초과하셨습니다\n" << endl;
                                     cout << "==================================================" << endl;
@@ -549,8 +565,24 @@ public:
                                     cin.ignore(100, '\n');
                                     continue;
                                 }
-                                if ((0 < numBill) && (numBill <= 30)) {inAmount = 100000 * numBill; break;}
-                                else if (numBill > 30) {
+                                if ((0 < numBill) && (numBill <= 30)) {
+                                    int checking = -1;
+                                    atm->mainKoreanDisplay();
+                                    cout << "              " << numBill * 100000 << " 원이 맞습니까?\n" << endl;
+                                    cout << "          1. 맞음(계속 진행)    2. 다시 입력\n" << endl;
+                                    cout << "==================================================" << endl;
+                                    cout << "번호 입력 : ";
+                                    cin >> checking;
+                                    if (cin.fail() == true) {
+                                        atm->invalidKoreanDisplay();
+                                        cin.clear();
+                                        cin.ignore(100, '\n');
+                                        continue;
+                                    }
+                                    if (checking == 1) {inAmount = 100000 * numBill; break;}
+                                    else if (checking == 2) continue;
+                                    else atm->invalidKoreanDisplay();
+                                } else if (numBill > 30) {
                                     atm->mainKoreanDisplay();
                                     cout << "       거래 1회 당 입금 가능한 장 수를 초과하셨습니다\n" << endl;
                                     cout << "==================================================" << endl;
@@ -710,8 +742,24 @@ public:
                                     cout << "               0 원을 송금할 수는 없습니다\n" << endl;
                                     cout << "==================================================" << endl;
                                 } else {
-                                    if (numBill <= 50) {inAmount = 10000 * numBill; break;}
-                                    else {
+                                    if (numBill <= 50) {
+                                        int checking = -1;
+                                        atm->mainKoreanDisplay();
+                                        cout << "               " << numBill * 10000 << " 원이 맞습니까?\n" << endl;
+                                        cout << "          1. 맞음(계속 진행)    2. 다시 입력\n" << endl;
+                                        cout << "==================================================" << endl;
+                                        cout << "번호 입력 : ";
+                                        cin >> checking;
+                                        if (cin.fail() == true) {
+                                            atm->invalidKoreanDisplay();
+                                            cin.clear();
+                                            cin.ignore(100, '\n');
+                                            continue;
+                                        }
+                                        if (checking == 1) {inAmount = 10000 * numBill; break;}
+                                        else if (checking == 2) continue;
+                                        else atm->invalidKoreanDisplay();
+                                    } else {
                                         atm->mainKoreanDisplay();
                                         cout << "       거래 1회 당 송금 가능한 장 수를 초과하셨습니다\n" << endl;
                                         cout << "==================================================" << endl;
@@ -889,6 +937,7 @@ public:
                         if (x == 1) {
                             while (true) {
                                 atm->mainEnglishDisplay();
+                                cout << "           You select the Cash Deposit.\n" << endl;
                                 cout << "   PLEASE ENTER THE NUMBER OF 10,000 WON BILLS\n" << endl;
                                 cout << "==================================================" << endl;
                                 cout << "The Number of Bills : ";
@@ -906,8 +955,24 @@ public:
                                     cout << "             YOU CANNOT DEPOSIT 0 won\n" << endl;
                                     cout << "==================================================" << endl;
                                 } else {
-                                    if (numBill <= 50) {inAmount = 10000 * numBill; break;}
-                                    else {
+                                    if (numBill <= 50) {
+                                        int checking = -1;
+                                        atm->mainEnglishDisplay();
+                                        cout << "               " << numBill * 10000 << " won IS RIGHT?\n" << endl;
+                                        cout << "             1. CORRECT    2. Re-TRY\n" << endl;
+                                        cout << "==================================================" << endl;
+                                        cout << "Enter the number : ";
+                                        cin >> checking;
+                                        if (cin.fail() == true) {
+                                            atm->invalidEnglishDisplay();
+                                            cin.clear();
+                                            cin.ignore(100, '\n');
+                                            continue;
+                                        }
+                                        if (checking == 1) {inAmount = 10000 * numBill; break;}
+                                        else if (checking == 2) continue;
+                                        else atm->invalidEnglishDisplay();
+                                    } else {
                                         atm->mainEnglishDisplay();
                                         cout << "    IT'S OVER THE LIMIT IN THE NUMBER OF CASH" << endl;
                                         cout << "      THAT CAN BE DEPOSITED PER TRANSACTION\n" << endl;
@@ -921,6 +986,7 @@ public:
                         } else if (x == 2) {
                             while (true) {
                                 atm->mainEnglishDisplay();
+                                cout << "          You select the Check Deposit.\n" << endl;
                                 cout << "  PLEASE ENTER THE NUMBER OF 100,000 WON CHECKS\n" << endl;
                                 cout << "==================================================" << endl;
                                 cout << "The Number of Checks : ";
@@ -938,8 +1004,24 @@ public:
                                     cout << "             YOU CANNOT DEPOSIT 0 won\n" << endl;
                                     cout << "==================================================" << endl;
                                 } else {
-                                    if (numBill <= 30) {inAmount = 100000 * numBill; break;}
-                                    else {
+                                    if (numBill <= 30) {
+                                        int checking = -1;
+                                        atm->mainEnglishDisplay();
+                                        cout << "              " << numBill * 10000 << " won IS RIGHT?\n" << endl;
+                                        cout << "             1. CORRECT    2. Re-TRY\n" << endl;
+                                        cout << "==================================================" << endl;
+                                        cout << "Enter the number : ";
+                                        cin >> checking;
+                                        if (cin.fail() == true) {
+                                            atm->invalidEnglishDisplay();
+                                            cin.clear();
+                                            cin.ignore(100, '\n');
+                                            continue;
+                                        }
+                                        if (checking == 1) {inAmount = 100000 * numBill; break;}
+                                        else if (checking == 2) continue;
+                                        else atm->invalidEnglishDisplay();
+                                    } else {
                                         atm->mainEnglishDisplay();
                                         cout << "    IT'S OVER THE LIMIT IN THE NUMBER OF CHECK" << endl;
                                         cout << "      THAT CAN BE DEPOSITED PER TRANSACTION\n" << endl;
@@ -1066,7 +1148,7 @@ public:
                                 cout << "==================================================" << endl;
                             } else {
                                 atm->mainEnglishDisplay();
-                                cout << "       PLEASE ENTER THE AMOUNT TO TRANSFER\n" << endl;
+                                cout << "   PLEASE ENTER THE DESTINATION ACCOUNT NUMBER\n" << endl;
                                 cout << "==================================================" << endl;
                                 cout << "Destination Account Number : ";
                                 string inDest;
@@ -1086,6 +1168,7 @@ public:
                             unsigned long long inAmount;
                             while (true) {
                                 atm->mainEnglishDisplay();
+                                cout << "     You select the Cash Transfer Transaction\n" << endl;
                                 cout << "   PLEASE ENTER THE NUMBER OF 10,000 WON BILLS\n" << endl;
                                 cout << "==================================================" << endl;
                                 cout << "The Number of Bills : ";
@@ -1103,8 +1186,24 @@ public:
                                     cout << "            YOU CANNOT TRANSFER 0 won\n" << endl;
                                     cout << "==================================================" << endl;
                                 } else {
-                                    if (numBill <= 50) {inAmount = 10000 * numBill; break;}
-                                    else {
+                                    if (numBill <= 50) {
+                                        int checking = -1;
+                                        atm->mainEnglishDisplay();
+                                        cout << "               " << numBill * 10000 << " won IS RIGHT?\n" << endl;
+                                        cout << "             1. CORRECT    2. Re-TRY\n" << endl;
+                                        cout << "==================================================" << endl;
+                                        cout << "Enter the number : ";
+                                        cin >> checking;
+                                        if (cin.fail() == true) {
+                                            atm->invalidEnglishDisplay();
+                                            cin.clear();
+                                            cin.ignore(100, '\n');
+                                            continue;
+                                        }
+                                        if (checking == 1) {inAmount = 10000 * numBill; break;}
+                                        else if (checking == 2) continue;
+                                        else atm->invalidEnglishDisplay();
+                                    } else {
                                         atm->mainEnglishDisplay();
                                         cout << "    IT'S OVER THE LIMIT IN THE NUMBER OF CASH" << endl;
                                         cout << "     THAT CAN BE TRANSFERED PER TRANSACTION\n" << endl;
@@ -1596,10 +1695,10 @@ int main(int argc, char* argv[]) {
         cout << "Argument 부족" << endl;
         return 1;
     } else { // 정상 실행
-        ifstream atmtxt(argv[1]); // 파일 read
-        readAtmData(atmtxt);
         ifstream banktxt(argv[2]); // 파일 read
         readBankData(banktxt);
+        ifstream atmtxt(argv[1]); // 파일 read
+        readAtmData(atmtxt);
         ifstream acctxt(argv[3]); // 파일 read
         readAccountData(acctxt);
     }
