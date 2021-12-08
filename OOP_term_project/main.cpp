@@ -140,6 +140,7 @@ public:
 };
 CashTransferTransaction::CashTransferTransaction(Account* destacc, Account* acc, unsigned long long amount, string accountBank, string destBank) {
     destaccount = destacc;
+    account = acc;
     Amount = amount;
     ID = ++transactionCnt;
     englishDescription.append(to_string(ID) + ". " + accountBank + " " + account->getInfo() + " '" + account->getAccountNumber() + "' transfer to\n    " + destBank + " " + destaccount->getInfo() + " '" + destaccount->getAccountNumber() + "' " + to_string(amount) + " won\n    (Cash -> Account))");
@@ -365,11 +366,16 @@ void Session::Withdrawal(unsigned long long amount, int x) {
 
 void Session::CashTransfer(unsigned long long amount, Account* destination, int x) {
     unsigned long long fee;
+    string bankName = atm->getPrimaryBankInfo();
     string accountNum = (findAccount(account->getAccountNumber()))->getBankName();
     string destNum = (findAccount(destination->getAccountNumber()))->getBankName();
-    if ( (accountNum.compare(destNum) == 0) && (primarySignal == true) ) fee = 1500;
-    else if ( (accountNum.compare(destNum) == 0) && (primarySignal == false) ) fee = 2500;
-    else fee = 2000;
+    if (primarySignal == true) {
+        if (bankName.compare(destNum) == 0) fee = 1500;
+        else fee = 2000;
+    } else {
+        if (bankName.compare(destNum) == 0) fee = 2000;
+        else fee = 2500;
+    }
     if (fee > account->getFundInfo()) {
         if (x == 0) cout << "                      잔액 부족\n" << endl;
         else cout << "           YOU DON'T HAVE ENOUGH MONEY\n" << endl;
@@ -377,7 +383,7 @@ void Session::CashTransfer(unsigned long long amount, Account* destination, int 
         account->minusMoney(fee);
         atm->plusMoney(amount);
         destination->plusMoney(amount);
-        CashTransferTransaction newTransaction(destination, account, amount, findAccount(account->getAccountNumber())->getBankName(), findAccount(destination->getAccountNumber())->getBankName());
+        CashTransferTransaction newTransaction(destination, account, amount, accountNum, destNum);
         destination->addTransaction(&newTransaction);
         transactionHistoryOfSession.push_back(newTransaction);
         if (x == 0) cout << newTransaction.getKoreanInformation() << endl;
@@ -393,11 +399,16 @@ void Session::CashTransfer(unsigned long long amount, Account* destination, int 
 
 void Session::AccountTransfer(unsigned long long amount, Account* destination, int x) {
     unsigned long long fee;
+    string bankName = atm->getPrimaryBankInfo();
     string accountNum = (findAccount(account->getAccountNumber()))->getBankName();
     string destNum = (findAccount(destination->getAccountNumber()))->getBankName();
-    if ( (accountNum.compare(destNum) == 0) && (primarySignal == true) ) fee = 1500;
-    else if ( (accountNum.compare(destNum) == 0) && (primarySignal == false) ) fee = 2500;
-    else fee = 2000;
+    if (primarySignal == true) {
+        if (bankName.compare(destNum) == 0) fee = 1500;
+        else fee = 2000;
+    } else {
+        if (bankName.compare(destNum) == 0) fee = 2000;
+        else fee = 2500;
+    }
     if (amount + fee > account->getFundInfo()) {
         if (x == 0) cout << "                      잔액 부족\n" << endl;
         else cout << "           YOU DON'T HAVE ENOUGH MONEY\n" << endl;
@@ -790,7 +801,7 @@ public:
                                 cout << "==================================================" << endl;
                             } else {
                                 atm->mainKoreanDisplay();
-                                AccountTransfer(inAmount, findAccount(inDest)->findAccountOfBank(inDest), 0);
+                                CashTransfer(inAmount, findAccount(inDest)->findAccountOfBank(inDest), 0);
                                 cout << "==================================================" << endl;
                             }
                             
@@ -1224,7 +1235,7 @@ public:
                                 }
                             }
                             atm->mainEnglishDisplay();
-                            cout << "      PLEASE ENTER THE ACCOUNT TO TRANSFER\n" << endl;
+                            cout << "   PLEASE ENTER THE DESTINATION ACCOUNT NUMBER\n" << endl;
                             cout << "==================================================" << endl;
                             cout << "Destination Account Number : ";
                             string inDest;
@@ -1235,7 +1246,7 @@ public:
                                 cout << "==================================================" << endl;
                             } else {
                                 atm->mainEnglishDisplay();
-                                AccountTransfer(inAmount, findAccount(inDest)->findAccountOfBank(inDest), 1);
+                                CashTransfer(inAmount, findAccount(inDest)->findAccountOfBank(inDest), 1);
                                 cout << "==================================================" << endl;
                             }
                             
