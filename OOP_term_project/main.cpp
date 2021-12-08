@@ -364,19 +364,31 @@ void Session::Withdrawal(unsigned long long amount, int x) {
 }
 
 void Session::CashTransfer(unsigned long long amount, Account* destination, int x) {
-    atm->plusMoney(amount);
-    destination->plusMoney(amount);
-    CashTransferTransaction newTransaction(destination, account, amount, findAccount(account->getAccountNumber())->getBankName(), findAccount(destination->getAccountNumber())->getBankName());
-    destination->addTransaction(&newTransaction);
-    transactionHistoryOfSession.push_back(newTransaction);
-    if (x == 0) cout << newTransaction.getKoreanInformation() << endl;
-    else cout << newTransaction.getEnglishInformation() << endl;
-    if (x == 0) cout << "\n현재 잔액 : ";
-    else cout << "\nCURRENT BALANCE : ";
-    cout << account->getFundInfo();
-    if (x == 0) cout << " 원" << endl;
-    else cout << " won" << endl;
-    cout << "\n";
+    unsigned long long fee;
+    string accountNum = (findAccount(account->getAccountNumber()))->getBankName();
+    string destNum = (findAccount(destination->getAccountNumber()))->getBankName();
+    if ( (accountNum.compare(destNum) == 0) && (primarySignal == true) ) fee = 1500;
+    else if ( (accountNum.compare(destNum) == 0) && (primarySignal == false) ) fee = 2500;
+    else fee = 2000;
+    if (fee > account->getFundInfo()) {
+        if (x == 0) cout << "                      잔액 부족\n" << endl;
+        else cout << "           YOU DON'T HAVE ENOUGH MONEY\n" << endl;
+    } else {
+        account->minusMoney(fee);
+        atm->plusMoney(amount);
+        destination->plusMoney(amount);
+        CashTransferTransaction newTransaction(destination, account, amount, findAccount(account->getAccountNumber())->getBankName(), findAccount(destination->getAccountNumber())->getBankName());
+        destination->addTransaction(&newTransaction);
+        transactionHistoryOfSession.push_back(newTransaction);
+        if (x == 0) cout << newTransaction.getKoreanInformation() << endl;
+        else cout << newTransaction.getEnglishInformation() << endl;
+        if (x == 0) cout << "\n현재 잔액 : ";
+        else cout << "\nCURRENT BALANCE : ";
+        cout << account->getFundInfo();
+        if (x == 0) cout << " 원" << endl;
+        else cout << " won" << endl;
+        cout << "\n";
+    }
 }
 
 void Session::AccountTransfer(unsigned long long amount, Account* destination, int x) {
